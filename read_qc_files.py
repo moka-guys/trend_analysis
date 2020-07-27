@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 import os
 import datetime
@@ -38,16 +41,18 @@ class trend_analysis():
                         # that function is called, supplying tool and self.input_folder variables as inputs
                         # a dictionary is returned, with the run as a key, and a list of values as the value
                         self.dictionary[tool] = obj(tool,self.input_folder, self.runtype)
-                        # Next determine what plot type is required for this tool (as defined in config)
-                        if config.tool_settings[tool]["plot_type"]=="box_plot":
-                            # box_plot function returns the location of a plot it has saved
-                            self.dictionary[tool]["image_location"] = box_plot(tool,self.dictionary)
-                        elif config.tool_settings[tool]["plot_type"]=="table":
-                            # table function returns a html string
-                            self.dictionary[tool]["table_text"] = table(tool,self.dictionary)
-                        # call function which creates the html module for this tool
-                        # append output to self.plots
-                        self.plots.append(self.create_tool_plot(tool))
+			# if the dictionary is populated (might not find the expected inputs)
+                        if self.dictionary[tool]:
+                            # Next determine what plot type is required for this tool (as defined in config)
+                            if config.tool_settings[tool]["plot_type"]=="box_plot":
+                                # box_plot function returns the location of a plot it has saved
+                                self.dictionary[tool]["image_location"] = box_plot(tool,self.dictionary,self.runtype)
+                            elif config.tool_settings[tool]["plot_type"]=="table":
+                                # table function returns a html string
+                                self.dictionary[tool]["table_text"] = table(tool,self.dictionary)
+                            # call function which creates the html module for this tool
+                            # append output to self.plots
+                            self.plots.append(self.create_tool_plot(tool))
         # after looping through all tools generate report
         self.generate_report()
 
@@ -140,7 +145,7 @@ def table(tool,dictionary):
     # return string
     return rows_html
 
-def box_plot(tool,dictionary):
+def box_plot(tool,dictionary,runtype):
     """
     This function builds a box plot and saves the image to a location defined in the config
     The x axis is labelled with the number of runs included, from oldest to newest
@@ -164,10 +169,10 @@ def box_plot(tool,dictionary):
             xlabels.append(str(i)+"\nnewest")
         else:
             xlabels.append(str(i))
+
     # Add the data to the plot
     # dictionary[tool] is a dictionary, with the run name as key, and a list of values as the value
     plt.boxplot(dictionary[tool].values(),labels=xlabels)
-
     # so we can draw horizontal cutoffs capture the axis ranges
     xmin, xmax, ymin, ymax = plt.axis()
     # add horizontal lines using plt.hlines
@@ -179,10 +184,11 @@ def box_plot(tool,dictionary):
     # add the x ticks
     plt.xticks()
     # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
-    image_path=os.path.join(config.images_folder,self.runtype + "_" + tool+".png")
+    image_path=os.path.join(config.images_folder,runtype + "_" + tool+".png")
+    html_image_path = "images/"+runtype + "_" + tool+".png"
     plt.savefig(image_path,bbox_inches="tight",dpi=200)
     # return the path to the save image
-    return image_path
+    return html_image_path
 
 def sorted_runs(run_list, runtype):
     """
@@ -218,7 +224,7 @@ def sorted_runs(run_list, runtype):
     # return the x most recent runs (x is defined in config)
     return sortedruns[-config.number_of_runs_to_include:]
 
-def describe_run_names(tool,input_folder):
+def describe_run_names(tool, input_folder, runtype):
     """
     This function is specified as the function to be used in the tool config
     It's specific use is to populate a table describing the runs included in this analysis
@@ -231,7 +237,7 @@ def describe_run_names(tool,input_folder):
         dictionary with key as the order, and value the run name
     """
     # get date sorted list of runfolders
-    sorted_run_list = sorted_runs(os.listdir(input_folder))
+    sorted_run_list = sorted_runs(os.listdir(input_folder), runtype)
     run_name_dictionary = {}
     # build dictionary with key as the order and value as run name.
     # Add oldest and newest to first and last
@@ -267,7 +273,8 @@ def parse_multiqc_output(tool, input_folder, runtype):
     # add this to the dictionary
     for run in sorted_runs(os.listdir(input_folder), runtype):
         input_file = find(input_file_name,os.path.join(input_folder,run))
-        tool_dict[run] = return_columns(input_file,tool)
+        if input_file:
+            tool_dict[run] = return_columns(input_file,tool)
     return tool_dict
 
 def find(name, path):
@@ -283,7 +290,7 @@ def find(name, path):
     for root, dirs, files in os.walk(path):
         if name in files:
             return os.path.join(root, name)
-
+    return False
 def return_columns(file_path,tool):
     """
     For a given file, open and for each line (excluding header if required) extract the column of interest as a float
@@ -314,9 +321,13 @@ def check_for_update():
     Look to see if the index.html, which contains the links to multiqc reports has been modified in the last hour
     """
     # see when the index.html file was last modified
-    index_last_modified = os.path.getmtime(config.index_file)
+    index_last_modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(config.index_file))
     # if the date modified is more than the frequency the script is run (using now - timedelta) a multiqc report has been added and we need to run the script.
     if index_last_modified >= datetime.datetime.now()-datetime.timedelta(hours=config.run_frequency):
+	return True
+    else:
+        print "index not modified since script run last"
+	# whilst debugging
 	return True
 
 

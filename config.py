@@ -14,7 +14,7 @@ tool_settings = {
         "lower_lim": False,
 		"lower_lim_label":False,
 		"WES":True,
-		"Panel":True,
+		"PANEL":True,
 		"ONC":True
     },
     "picard_insertsize":{
@@ -35,7 +35,7 @@ tool_settings = {
         "lower_lim": False,
 		"lower_lim_label":False,
 		"WES":True,
-		"Panel":False,
+		"PANEL":True,
 		"ONC":False
     },
     "q30_percent":{
@@ -52,12 +52,33 @@ tool_settings = {
         "lower_lim_linecolour":"",
         "upper_lim_linecolour":"",
         "upper_lim": False,
-		"upper_lim_label":False,
+	"upper_lim_label":False,
         "lower_lim": False,
-		"lower_lim_label":False,
-		"WES":True,
-		"Panel":False,
-		"ONC":False
+	"lower_lim_label":False,
+	"WES":True,
+	"PANEL":True,
+	"ONC":False
+    },
+    "target_bases_at_30X":{
+        "function":"parse_multiqc_output",
+        "plot_type":"box_plot",
+        "input_file":"multiqc_picard_HsMetrics.txt",
+        "name_column":1,
+        "column_of_interest":10,
+        "header_present":True,
+        "plot_title":"target_bases_at_30X",
+        "plot_text":"Boxplot showing the % of bases in the target regions which are covered at >= 30X.",
+        "upper_lim_linestyle":"dashed",
+        "lower_lim_linestyle":"solid",
+        "lower_lim_linecolour":'r',
+        "upper_lim_linecolour":'k',
+        "upper_lim": False,
+        "upper_lim_label": "95% at 30X",
+        "lower_lim": False,
+        "lower_lim_label": "90% at 30X",
+         "WES":False,
+         "PANEL":True,
+         "ONC":False
     },
     "target_bases_at_20X":{
         "function":"parse_multiqc_output",
@@ -77,7 +98,7 @@ tool_settings = {
         "lower_lim": 0.90,
         "lower_lim_label": "90% at 20X",
 		"WES":True,
-		"Panel":False,
+		"PANEL":False,
 		"ONC":False
     },
     "on_target_vs_selected":{
@@ -98,7 +119,7 @@ tool_settings = {
         "lower_lim": False,
 		"lower_lim_label":False,
 		"WES":True,
-		"Panel":False,
+		"PANEL":True,
 		"ONC":False
     },
     "contamination":{
@@ -119,7 +140,7 @@ tool_settings = {
         "lower_lim": False,
 		"lower_lim_label":False,
 		"WES":True,
-		"Panel":False,
+		"PANEL":False,
 		"ONC":False
     }
 }
@@ -127,7 +148,9 @@ tool_settings = {
 images_folder="/var/www/html/mokaguys/multiqc/trend_analysis/images/"
 logopath=images_folder+"viapathlogo.png"
 template_dir = 'html_template'
-run_types = ["WES", "PANEL", "SWIFT"]
+run_types = ["WES", "PANEL"]
+#run_types = ["WES", "PANEL", "SWIFT"]
+
 run_frequency = 2
 number_of_runs_to_include = 5
 index_file = "/var/www/html/mokaguys/multiqc/index.html"
