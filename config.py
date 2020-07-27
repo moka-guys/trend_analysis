@@ -124,12 +124,14 @@ tool_settings = {
     }
 }
 
-images_folder="/home/aled/Documents/200724_trendanalysis/html_template/images/"
-logopath="/home/aled/Documents/200724_trendanalysis/html_template/images/viapathlogo.png"
-#qc_folder="/home/aled/Documents/200724_trendanalysis/QC_files"
-template_dir = '/home/aled/Documents/200724_trendanalysis/html_template'
-#output = '/home/aled/Documents/200724_trendanalysis'
-
+images_folder="/var/www/html/mokaguys/multiqc/trend_analysis/images/"
+logopath=images_folder+"viapathlogo.png"
+template_dir = 'html_template'
+run_types = ["WES", "PANEL", "SWIFT"]
+run_frequency = 2
+index_file = "/var/www/html/mokaguys/multiqc/index.html"
+input_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data"
+output_folder = "/var/www/html/mokaguys/multiqc/trend_analysis"
 
 body_template = '<div class="body" align="left">{}<br /></div>'
 
@@ -156,3 +158,4 @@ table_template= \
         </div> \
         <div class="clear">&nbsp;</div> \
 	    <hr width="90%" size="4" color="black">'
+

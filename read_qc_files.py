@@ -4,43 +4,21 @@ import datetime
 import sys
 from collections import OrderedDict
 import inspect
-import argparse
 import config as config
 from jinja2 import Environment, FileSystemLoader
 
-def cli_arguments(args):
-    """Parses command line arguments.
-    Args:
-        args: A list containing the expected commandline arguments. Example:
-            ['scriptname.py',
-            -r, runtype (one of 'WES','PANEL','ONC'),
-            -i, /path/to/input/folder,
-            -o, /path/to/output/folder
-             ]
-    Returns:
-        An argparse.parser object with methods named after long-option command-line arguments. Example:
-            --runtype "WES" --> parser.parse_args(args).runtype
-    """
-    # Define arguments.
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--runtype', required=True, choices=['WES','PANEL','ONC'], help='the type of run to perform trend analysis across')
-    parser.add_argument('-i', '--input_folder', required=True, help='path to folder containing QC folders for each run bedfile, required')
-    parser.add_argument('-o', '--output_file', required=True, help='path to output file, required')
-    
-    # Collect arguments and return
-    return parser.parse_args(args)
 
 class trend_analysis():
     """
     """
-    def __init__(self, args):        
+    def __init__(self, input_folder, output_folder, runtype):
         self.timestamp = datetime.datetime.now().strftime('%d-%B-%Y %H:%M')
         self.dictionary = OrderedDict({})
         self.plots = []
-        self.runtype = args.runtype
-        self.input_folder = args.input_folder
-        self.output_file = args.output_file
-    
+        self.runtype = runtype
+        self.input_folder = input_folder
+        self.output_folder = output_file
+
     def call_tools(self):
         """
         Loop through the list of plots in the sorted list (config.plot_order)
@@ -72,7 +50,7 @@ class trend_analysis():
                         self.plots.append(self.create_tool_plot(tool))
         # after looping through all tools generate report
         self.generate_report()
-                    
+
     def create_tool_plot(self, tool):
         """
         This function build a tool specific html module.
@@ -93,9 +71,9 @@ class trend_analysis():
         # pass plot title, plot text (both defined in tool config), plot content and the template to be used
         # the populated html template is returned, and this is returned from this function
         return self.populate_html_template(config.tool_settings[tool]["plot_title"],plot_content,config.tool_settings[tool]["plot_text"],template)
-        
-    
-    
+
+
+
     def populate_html_template(self, plot_title, plot_image, plot_text, template):
         """
         Populates a html template for a single plot, which can then be added to the larger template
@@ -114,24 +92,25 @@ class trend_analysis():
         This function takes all the plot specific html segments and inserts these into the report template
         The report html template is loaded, the placeholders filled and this report is saved to the provided location
         """
-                
-        # specify the folder containing the html templates 
-        html_template_dir = Environment(loader=FileSystemLoader(config.template_dir))
-    
+
+        # specify the folder containing the html templates
+	# this should be a subfolder of this repository with the name defined in config file.
+        html_template_dir = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__),config.template_dir)))
+
         # specify which html template to use, and load this as a python object, template
         html_template = html_template_dir.get_template("internal_report_template.html")
-        
-        # the template has a number of placeholders. 
+
+        # the template has a number of placeholders.
         # When the report is rendered these are populated from this dictionary
         # self.plots is a list of html sections created for each plot. join these into a single string, joint with a newline
         place_holder_values = {
             "reports":config.body_template.format("\n".join(self.plots)),
             "logo_path":config.logopath,
-            "timestamp":self.timestamp 
+            "timestamp":self.timestamp
             }
-        
+
         # open a html file, saved to the provided path
-        with open(self.output_file, "wb") as html_file:
+        with open(os.path.join(self.output_folder,self.runtype+"_trend_report.html"), "wb") as html_file:
             # write the template, rendering with the placeholders using the dictionary
             html_file.write(html_template.render(place_holder_values))
 
@@ -166,7 +145,7 @@ def box_plot(tool,dictionary):
     This function builds a box plot and saves the image to a location defined in the config
     The x axis is labelled with the number of runs included, from oldest to newest
     Where specified in config, horizontal lines are added to define cutoffs
-    
+
     Inputs:
         dictionary - dictionary of qc data for all tools
         tool name - allows access to tool specific config settings and of dictionary
@@ -199,12 +178,12 @@ def box_plot(tool,dictionary):
         plt.hlines(config.tool_settings[tool]["lower_lim"],xmin, xmax,label=config.tool_settings[tool]["lower_lim_label"], linestyles=config.tool_settings[tool]["lower_lim_linestyle"],colors=config.tool_settings[tool]["lower_lim_linecolour"])
     # add the x ticks
     plt.xticks()
-    # set the path to save image using the config location
-    image_path=os.path.join(config.images_folder,tool+".png")
+    # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
+    image_path=os.path.join(config.images_folder,self.runtype + "_" + tool+".png")
     plt.savefig(image_path,bbox_inches="tight",dpi=200)
     # return the path to the save image
     return image_path
-        
+
 def sorted_runs(run_list):
     """
     The runs should be plotted in date order.
@@ -220,7 +199,7 @@ def sorted_runs(run_list):
     for run in run_list:
         # extract the date and add to list
         dates.append(int(run.split("_")[1]))
-    
+
     # sort the list of dates, identify the full run name and append to sorted list
     sortedruns= []
     # if there are 2 runs on same day, both runs will be added for each date so use set()
@@ -289,7 +268,7 @@ def find(name, path):
     Return the path to identified file
     Input:
         filename - file to look for
-        path - path to the file containing all Qc files for that run
+        path - path to the file containing all QC files for that run
     Returns:
         Path to file of interest
     """
@@ -305,7 +284,7 @@ def return_columns(file_path,tool):
         filepath - file to parse
         tool name - tool name - allows access to tool specific config settings
     Returns:
-        a list of 
+        a list of measurements from the column of interest,
     """
     # list for sample specific measurements
     to_return=[]
@@ -313,7 +292,7 @@ def return_columns(file_path,tool):
     with open(file_path,'r') as input_file:
         # enumerate the list of lines as loop through it so we can skip the header if needed
         for linecount,line in enumerate(input_file):
-            if config.tool_settings[tool]["header_present"] and linecount==0:
+            if config.tool_settings[tool]["header_present"] and linecount == 0:
                 pass
             else:
                 # split the line and pull out column of interest and add to list
@@ -322,11 +301,23 @@ def return_columns(file_path,tool):
     # return list
     return to_return
 
-def main(args):
-    parsed_args = cli_arguments(args)
-    t=trend_analysis(parsed_args)
-    t.call_tools()
-    
+def check_for_update():
+    """
+    Look to see if the index.html, which contains the links to multiqc reports has been modified in the last hour
+    """
+    # see when the index.html file was last modified
+    index_last_modified = os.path.getmtime(config.index_file)
+    # if the date modified is more than the frequency the script is run (using now - timedelta) a multiqc report has been added and we need to run the script.
+    if index_last_modified >= datetime.datetime.now()-datetime.timedelta(hours=config.run_frequency):
+	return True
+
+
+def main():
+    if check_for_update():
+	for runtype in config.run_types:
+            t=trend_analysis(input_folder=config.input_folder,output_folder=config.output_folder, runtype=runtype)
+            t.call_tools()
+
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
