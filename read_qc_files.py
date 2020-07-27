@@ -17,7 +17,7 @@ class trend_analysis():
         self.plots = []
         self.runtype = runtype
         self.input_folder = input_folder
-        self.output_folder = output_file
+        self.output_folder = output_folder
 
     def call_tools(self):
         """
@@ -37,7 +37,7 @@ class trend_analysis():
                         # eg if config.tool_settings[tool]["function"] == parse_multiqc_output
                         # that function is called, supplying tool and self.input_folder variables as inputs
                         # a dictionary is returned, with the run as a key, and a list of values as the value
-                        self.dictionary[tool] = obj(tool,self.input_folder)
+                        self.dictionary[tool] = obj(tool,self.input_folder, self.runtype)
                         # Next determine what plot type is required for this tool (as defined in config)
                         if config.tool_settings[tool]["plot_type"]=="box_plot":
                             # box_plot function returns the location of a plot it has saved
@@ -184,31 +184,39 @@ def box_plot(tool,dictionary):
     # return the path to the save image
     return image_path
 
-def sorted_runs(run_list):
+def sorted_runs(run_list, runtype):
     """
-    The runs should be plotted in date order.
-    The runs included in the analysis are saved in run specific folders, named with the runfolder name (002_YYMMDD_...)
+    The runs should be plotted in date order, oldest to newest.
+    The runs included in the analysis are saved in run specific folders, named with the runfolder name (002_YYMMDD_[*WES*,*NGS*,*ONC*])
     Extract the date of the run from the folder name and create an ordered list
+
     Input:
         List of run folders to be included in trend analysis
+        Runtype - one of WES, PANEL or SWIFT to filter the available runs
     Returns:
-        sorted list of runfolder names
+        list of most recent runfolder names, in date ascending order (oldest first)
     """
-    dates = []
+    dates = {}
     # for run in folder
     for run in run_list:
-        # extract the date and add to list
-        dates.append(int(run.split("_")[1]))
+        # need to filter for only runs of this runtype
+        # if run of interest, extract the date and add this as a key to the  dict
+        # add run name as the value
+        if runtype == "WES" and "WES" in run:
+            dates[(int(run.split("_")[1]))] = run
+        if runtype == "PANEL" and "NGS" in run and "WES" not in run:
+            dates[(int(run.split("_")[1]))] = run
+        if runtype == "SWIFT" and "ONC" in run:
+            dates[(int(run.split("_")[1]))] = run
 
     # sort the list of dates, identify the full run name and append to sorted list
     sortedruns= []
     # if there are 2 runs on same day, both runs will be added for each date so use set()
+    # sort the list of dictionary keys (dates) in ascending order (oldest first)
     for date in sorted(set(dates)):
-        for run in run_list:
-            if str(date) in run:
-                sortedruns.append(run)
-    # return the sorted dates
-    return sortedruns
+        sortedruns.append(dates[date])
+    # return the x most recent runs (x is defined in config)
+    return sortedruns[-config.number_of_runs_to_include:]
 
 def describe_run_names(tool,input_folder):
     """
@@ -237,7 +245,7 @@ def describe_run_names(tool,input_folder):
     # return the dictionary
     return run_name_dictionary
 
-def parse_multiqc_output(tool, input_folder):
+def parse_multiqc_output(tool, input_folder, runtype):
     """
     This function is specified as the function to be used in the tool config
     It's specific use is to read a tool specific file output by multiqc
@@ -257,7 +265,7 @@ def parse_multiqc_output(tool, input_folder):
     tool_dict=OrderedDict({})
     # for each run find the file and pass it to return_columns, which generates a list
     # add this to the dictionary
-    for run in sorted_runs(os.listdir(input_folder)):
+    for run in sorted_runs(os.listdir(input_folder), runtype):
         input_file = find(input_file_name,os.path.join(input_folder,run))
         tool_dict[run] = return_columns(input_file,tool)
     return tool_dict
