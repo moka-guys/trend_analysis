@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import os
 import datetime
 import sys
+from collections import OrderedDict
 import inspect
 import argparse
 import config as config
@@ -34,7 +35,7 @@ class trend_analysis():
     """
     def __init__(self, args):        
         self.timestamp = datetime.datetime.now().strftime('%d-%B-%Y %H:%M')
-        self.dictionary = {}
+        self.dictionary = OrderedDict({})
         self.plots = []
         self.runtype = args.runtype
         self.input_folder = args.input_folder
@@ -274,7 +275,7 @@ def parse_multiqc_output(tool, input_folder):
     """
     # get the name of the raw data file
     input_file_name = config.tool_settings[tool]["input_file"]
-    tool_dict={}
+    tool_dict=OrderedDict({})
     # for each run find the file and pass it to return_columns, which generates a list
     # add this to the dictionary
     for run in sorted_runs(os.listdir(input_folder)):
