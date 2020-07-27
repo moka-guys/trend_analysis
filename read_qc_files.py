@@ -33,6 +33,7 @@ class trend_analysis():
         for tool in config.plot_order:
             # check the plot is applicable to this run type, eg coverage at 20X and contamination plots are only applicable to WES
             if config.tool_settings[tool][self.runtype]:
+                print tool, self.runtype
                 # parse the list of available modules in this script
                 for name,obj in inspect.getmembers(sys.modules[__name__]):
                     # if the module is described in the tool config (function) call that object
@@ -183,6 +184,7 @@ def box_plot(tool,dictionary,runtype):
         plt.hlines(config.tool_settings[tool]["lower_lim"],xmin, xmax,label=config.tool_settings[tool]["lower_lim_label"], linestyles=config.tool_settings[tool]["lower_lim_linestyle"],colors=config.tool_settings[tool]["lower_lim_linecolour"])
     # add the x ticks
     plt.xticks()
+    plt.ticklabel_format(axis='y', useOffset=False, style='plain')
     # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
     image_path=os.path.join(config.images_folder,runtype + "_" + tool+".png")
     html_image_path = "images/"+runtype + "_" + tool+".png"
@@ -290,7 +292,9 @@ def find(name, path):
     for root, dirs, files in os.walk(path):
         if name in files:
             return os.path.join(root, name)
+    print "no output named {} for run {}".format(name, path)
     return False
+
 def return_columns(file_path,tool):
     """
     For a given file, open and for each line (excluding header if required) extract the column of interest as a float
@@ -311,8 +315,12 @@ def return_columns(file_path,tool):
                 pass
             else:
                 # split the line and pull out column of interest and add to list
-                measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])
+		if config.tool_settings[tool]["conversion_to_percent"]:
+		    measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])*100
+		else:
+	            measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])
                 to_return.append(measurement)
+
     # return list
     return to_return
 
