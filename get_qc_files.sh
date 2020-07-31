@@ -1,28 +1,28 @@
 # source environment (may not be needed in a nexus app)
 source ~/dx-toolkit/environment
 # Get the apikey - need to be logged in to cat this.
-# if running localy read from file
+# NB if running locally replace this reading from file
 API_KEY=$(dx cat project-FQqXfYQ0Z0gqx7XG9Z2b4K43:mokaguys_nexus_auth_key)
 
-#define input variables
+# define which runs,and the number of runs to download - if making into a nexus app replace these with input arguments
 run_group=WES
 num_runs=5
 
 # set up the dx find projects command for each input (WES,PANEL or ONC)
 if [[ "$run_group" == "WES" ]]; then
     find_project_cmd="dx find projects --level ADMINISTER --name "002_*WES*" --auth-token $API_KEY"
-fi 
+fi
 if [[ "$run_group" == "ONC" ]]; then
     find_project_cmd="dx find projects --level ADMINISTER --name "002_*ONC*" --auth-token $API_KEY"
 fi
 if [[ "$run_group" == "PANEL" ]]; then
     find_project_cmd="dx find projects --level ADMINISTER --name "002_*NGS*" --auth-token $API_KEY | grep -v WES"
-fi    
+fi
 
 # execute dx find project command and loop through
 for line in `$find_project_cmd`; do
     # looping through will split on empty space - we only want the line containing the project-id
-    if [[ "$line" == project* ]]; then  
+    if [[ "$line" == project* ]]; then
         project_id=$line
         # using project-id run dx describe to return the date created
         # pass output of dx describe --json into jq to extract date created field
@@ -46,6 +46,6 @@ for line in `sort -k 2nr ~/project_list.txt | head -n $num_runs`; do
     mkdir -p QC_files/$project_name && cd QC_files/$project_name
     # use project id to download contents of QC folder
     # as some files do not have run specific names we can overwrite them (unlikely to be used)
-    dx download $project_id:/QC --no-progress -f --recursive --auth-token $API_KEY 
+    dx download $project_id:/QC --no-progress -f --recursive --auth-token $API_KEY
     cd ../..
 done
