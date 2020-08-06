@@ -4,6 +4,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
 import datetime
+import pdfkit
 import sys
 from collections import OrderedDict
 import inspect
@@ -16,6 +17,7 @@ class trend_analysis():
     """
     def __init__(self, input_folder, output_folder, runtype):
         self.timestamp = datetime.datetime.now().strftime('%d-%B-%Y %H:%M')
+        self.filename_timestamp = datetime.datetime.now().strftime('%y%m%d_%H_%M')
         self.dictionary = OrderedDict({})
         self.plots = []
         self.runtype = runtype
@@ -42,7 +44,7 @@ class trend_analysis():
                         # that function is called, supplying tool and self.input_folder variables as inputs
                         # a dictionary is returned, with the run as a key, and a list of values as the value
                         self.dictionary[tool] = obj(tool,self.input_folder, self.runtype)
-			# if the dictionary is populated (might not find the expected inputs)
+			            # if the dictionary is populated (might not find the expected inputs)
                         if self.dictionary[tool]:
                             # Next determine what plot type is required for this tool (as defined in config)
                             if config.tool_settings[tool]["plot_type"]=="box_plot":
@@ -115,12 +117,22 @@ class trend_analysis():
             "timestamp":self.timestamp
             }
 
+        html_path = os.path.join(self.output_folder,self.runtype+"_trend_report.html")
         # open a html file, saved to the provided path
-        with open(os.path.join(self.output_folder,self.runtype+"_trend_report.html"), "wb") as html_file:
+        with open(html_path, "wb") as html_file:
             # write the template, rendering with the placeholders using the dictionary
             html_file.write(html_template.render(place_holder_values))
 
-def table(tool,dictionary):
+        # the html file should be saved as a pdf (with all images) for long terms records. This uses the pdfkit package and wkhtmltopdf software 
+        # # specify pdfkit options to turn off standard out and also allow access to the images
+        # pdfkit needs the [ath tp wkhtmltopdf ninary file - defined in config]
+        pdfkit_options = {'enable-local-file-access': None, "quiet": ''}
+        pdfkit_config = pdfkit.configuration(wkhtmltopdf=config.wkhtmltopdf_path)
+        # using the pdfkit package, specify the html file to be converted, name the pdf kit using the timestamp and run type
+        pdfkit.from_file(html_path, os.path.join(config.archive_folder, str(self.filename_timestamp) + "_" + self.runtype + "_trend_report.pdf"), configuration=pdfkit_config, options=pdfkit_options)
+            
+
+def table(tool, dictionary):
     """
     This function builds a html table.
     Currently, this is designed to describe the run names included in this trend analysis,
@@ -190,7 +202,7 @@ def box_plot(tool,dictionary,runtype):
     html_image_path = "images/"+runtype + "_" + tool+".png"
     plt.savefig(image_path,bbox_inches="tight",dpi=200)
     # return the path to the save image
-    return html_image_path
+    return image_path
 
 def sorted_runs(run_list, runtype):
     """

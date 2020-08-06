@@ -6,6 +6,7 @@ This script is designed to run on the viapath genomics server and creates a tren
 * Python2.7
 * python packages as described in requirements.txt
 * python-tk (v2.7.12-1~16.04)
+* wkhtmltopdf (0.12.6-1.xenial_amd64) - When running headless this should be downloaded from github so the repo includes a patches version of QT (not included when instaling from apt repositories)
 
 ## How does read_qc_files.py work
 ###  Inputs
@@ -30,6 +31,7 @@ This script is designed to run on the viapath genomics server and creates a tren
 #### Create run type-specific trend analysis report
 * The individual plots are inserted into the report html template
 * The html page is saved to /var/www/html/mokaguys/multiqc/trend_analysis/{runtype}\_trend_report.html
+* A PDF version of the webpage is also saved in /var/www/html/mokaguys/multiqc/trend_analysis/archive named with a time stamp for long term storage
 
 #### Runs included in the report
 * The runs present on the server are filtered depending on run type and the name parsed to extract the date.

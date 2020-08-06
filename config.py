@@ -1,10 +1,32 @@
+# how frequenctly (in hours) the script will run (via cron) - this value defines the window which the index.html file date modified must fall within to trigger a new trend analysis
+run_frequency = 2
+number_of_runs_to_include = 5
+
+# folder paths
+index_file = "/var/www/html/mokaguys/multiqc/index.html"
+input_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data"
+output_folder = "/var/www/html/mokaguys/multiqc/trend_analysis"
+images_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/images/"
+logopath = images_folder + "viapathlogo.png"
+template_dir = 'html_template'
+
+# pdf creation
+archive_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/archive"
+wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
+
+run_types = ["WES", "PANEL"]
+#run_types = ["WES", "PANEL", "SWIFT"]
+
+# This defines the order plots appear in the report (top to bottom) - Only plots in this list will be included on the report
 plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","contamination"]
+
+# tool specific settings
 tool_settings = {
     "run_names":{
         "function":"describe_run_names",
         "plot_type":"table",
         "plot_title":"Run names",
-        "plot_text":"These are the runs plottd on the below plots, linking axis label to run name",
+        "plot_text":"These are the runs included on the below plots. Numbers are used to simplify the x axis labels on the plots, so this table can be used to link the axis labels to run name",
         "conversion_to_percent":False,
         "upper_lim_linestyle":"",
         "lower_lim_linestyle":"",
@@ -152,20 +174,8 @@ tool_settings = {
     }
 }
 
-images_folder="/var/www/html/mokaguys/multiqc/trend_analysis/images/"
-logopath=images_folder+"viapathlogo.png"
-template_dir = 'html_template'
-run_types = ["WES", "PANEL"]
-#run_types = ["WES", "PANEL", "SWIFT"]
 
-# how frequenctly (in hours) the script will run (via cron) - this value defines the window which the index.html file date modified must fall within to trigger a new trend analysis
-run_frequency = 2
-number_of_runs_to_include = 5
-
-index_file = "/var/www/html/mokaguys/multiqc/index.html"
-input_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data"
-output_folder = "/var/www/html/mokaguys/multiqc/trend_analysis"
-
+# HTMLtemplates
 body_template = '<div class="body" align="left">{}<br /></div>'
 
 plot_template= \
