@@ -346,9 +346,10 @@ def check_for_update():
     if index_last_modified >= datetime.datetime.now()-datetime.timedelta(hours=config.run_frequency):
 	return True
     else:
-        print "index not modified since script run last"
+        #print "index not modified since script run last"
 	# whilst debugging
-	return True
+	# return True
+	return False
 
 
 def main():
