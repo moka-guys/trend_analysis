@@ -7,7 +7,7 @@ index_file = "/var/www/html/mokaguys/multiqc/index.html"
 input_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data"
 output_folder = "/var/www/html/mokaguys/multiqc/trend_analysis"
 images_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/images/"
-logopath = images_folder + "viapathlogo.png"
+logopath = "images/viapathlogo.png"
 template_dir = 'html_template'
 
 # pdf creation
