@@ -202,7 +202,7 @@ def box_plot(tool,dictionary,runtype):
     html_image_path = "images/"+runtype + "_" + tool+".png"
     plt.savefig(image_path,bbox_inches="tight",dpi=200)
     # return the path to the save image
-    return image_path
+    return html_image_path
 
 def sorted_runs(run_list, runtype):
     """

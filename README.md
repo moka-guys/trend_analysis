@@ -1,4 +1,4 @@
-# trend_analysis_v1.0
+# trend_analysis_v1.1
 The main script in this repository is `read_qc_files.py`
 This script is designed to run on the viapath genomics server and creates a trend analysis report for each test type (WES, custom panels) using data files output by multiqc.
 
