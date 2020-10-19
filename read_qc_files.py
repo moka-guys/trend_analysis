@@ -10,12 +10,26 @@ from collections import OrderedDict
 import inspect
 import config as config
 from jinja2 import Environment, FileSystemLoader
+import argparse
+from shutil import copyfile
 
+def get_arguments():
+    """
+    Uses argparse module to define and handle command line input arguments and help menu
+    """
+    parser = argparse.ArgumentParser()
+    # Define the arguments that will be taken.
+    parser.add_argument(
+        '-d', '--dev', action='store_true', help="uses development output file locations (ensures live "
+        "app isn't refreshed during development and testing)",
+    )
+    # Return the arguments
+    return parser.parse_args()
 
-class trend_analysis():
+class trend_analysis:
     """
     """
-    def __init__(self, input_folder, output_folder, runtype):
+    def __init__(self, input_folder, output_folder, runtype, images_folder):
         self.timestamp = datetime.datetime.now().strftime('%d-%B-%Y %H:%M')
         self.filename_timestamp = datetime.datetime.now().strftime('%y%m%d_%H_%M')
         self.dictionary = OrderedDict({})
@@ -23,6 +37,7 @@ class trend_analysis():
         self.runtype = runtype
         self.input_folder = input_folder
         self.output_folder = output_folder
+        self.images_folder = images_folder
 
     def call_tools(self):
         """
@@ -44,12 +59,12 @@ class trend_analysis():
                         # that function is called, supplying tool and self.input_folder variables as inputs
                         # a dictionary is returned, with the run as a key, and a list of values as the value
                         self.dictionary[tool] = obj(tool,self.input_folder, self.runtype)
-			            # if the dictionary is populated (might not find the expected inputs)
+                        # if the dictionary is populated (might not find the expected inputs)
                         if self.dictionary[tool]:
                             # Next determine what plot type is required for this tool (as defined in config)
                             if config.tool_settings[tool]["plot_type"]=="box_plot":
                                 # box_plot function returns the location of a plot it has saved
-                                self.dictionary[tool]["image_location"] = box_plot(tool,self.dictionary,self.runtype)
+                                self.dictionary[tool]["image_location"] = box_plot(tool,self.dictionary,self.runtype, self.images_folder)
                             elif config.tool_settings[tool]["plot_type"]=="table":
                                 # table function returns a html string
                                 self.dictionary[tool]["table_text"] = table(tool,self.dictionary)
@@ -82,7 +97,8 @@ class trend_analysis():
 
 
 
-    def populate_html_template(self, plot_title, plot_image, plot_text, template):
+    @staticmethod
+    def populate_html_template(plot_title, plot_image, plot_text, template):
         """
         Populates a html template for a single plot, which can then be added to the larger template
         Inputs:
@@ -102,7 +118,7 @@ class trend_analysis():
         """
 
         # specify the folder containing the html templates
-	# this should be a subfolder of this repository with the name defined in config file.
+	    # this should be a subfolder of this repository with the name defined in config file.
         html_template_dir = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__),config.template_dir)))
 
         # specify which html template to use, and load this as a python object, template
@@ -158,7 +174,7 @@ def table(tool, dictionary):
     # return string
     return rows_html
 
-def box_plot(tool,dictionary,runtype):
+def box_plot(tool, dictionary, runtype, images_folder):
     """
     This function builds a box plot and saves the image to a location defined in the config
     The x axis is labelled with the number of runs included, from oldest to newest
@@ -198,11 +214,11 @@ def box_plot(tool,dictionary,runtype):
     plt.xticks()
     plt.ticklabel_format(axis='y', useOffset=False, style='plain')
     # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
-    image_path=os.path.join(config.images_folder,runtype + "_" + tool+".png")
+    image_path=os.path.join(images_folder,runtype + "_" + tool+".png")
     html_image_path = "images/"+runtype + "_" + tool+".png"
     plt.savefig(image_path,bbox_inches="tight",dpi=200)
     # return the path to the save image
-    return image_path
+    return html_image_path
 
 def sorted_runs(run_list, runtype):
     """
@@ -310,7 +326,7 @@ def find(name, path):
 def return_columns(file_path,tool):
     """
     For a given file, open and for each line (excluding header if required) extract the column of interest as a float
-    Create and return a list of all meaurements
+    Create and return a list of all measurements
     Input:
         filepath - file to parse
         tool name - tool name - allows access to tool specific config settings
@@ -327,10 +343,10 @@ def return_columns(file_path,tool):
                 pass
             else:
                 # split the line and pull out column of interest and add to list
-		if config.tool_settings[tool]["conversion_to_percent"]:
-		    measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])*100
-		else:
-	            measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])
+                if config.tool_settings[tool]["conversion_to_percent"]:
+                    measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])*100
+                else:
+                    measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])
                 to_return.append(measurement)
 
     # return list
@@ -344,7 +360,7 @@ def check_for_update():
     index_last_modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(config.index_file))
     # if the date modified is more than the frequency the script is run (using now - timedelta) a multiqc report has been added and we need to run the script.
     if index_last_modified >= datetime.datetime.now()-datetime.timedelta(hours=config.run_frequency):
-	return True
+        return True
     else:
         #print "index not modified since script run last"
 	# whilst debugging
@@ -353,10 +369,17 @@ def check_for_update():
 
 
 def main():
-    if check_for_update():
-	for runtype in config.run_types:
-            t=trend_analysis(input_folder=config.input_folder,output_folder=config.output_folder, runtype=runtype)
+    args = get_arguments()
+    if args.dev:
+        for runtype in config.run_types:
+            t = trend_analysis(input_folder=config.input_folder, output_folder=config.dev_output_folder, images_folder=config.dev_images_folder, runtype=runtype)
             t.call_tools()
+            copyfile(src=config.index_file,dst=config.dev_index_file)
+    else:
+        if check_for_update():
+            for runtype in config.run_types:
+                t=trend_analysis(input_folder=config.input_folder,output_folder=config.output_folder, images_folder=config.images_folder, runtype=runtype)
+                t.call_tools()
 
 
 if __name__ == '__main__':
