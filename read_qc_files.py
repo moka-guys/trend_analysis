@@ -364,7 +364,7 @@ def check_for_update():
     else:
         #print "index not modified since script run last"
 	# whilst debugging
-	# return True
+	#return True
 	return False
 
 
