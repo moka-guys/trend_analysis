@@ -2,13 +2,18 @@
 run_frequency = 2
 number_of_runs_to_include = 5
 
-# folder paths
+# production folder paths
 index_file = "/var/www/html/mokaguys/multiqc/index.html"
 input_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data"
 output_folder = "/var/www/html/mokaguys/multiqc/trend_analysis"
 images_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/images/"
-logopath = images_folder + "viapathlogo.png"
+logopath = "images/viapathlogo.png"
 template_dir = 'html_template'
+
+# development folder paths
+dev_output_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis"
+dev_images_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/images/"
+dev_index_file = "/var/www/html/mokaguys/dev/multiqc/index.html"
 
 # pdf creation
 archive_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/archive"
