@@ -1,4 +1,4 @@
-# trend_analysis_v1.1
+# trend_analysis_v1.2
 The main script in this repository is `read_qc_files.py`
 This script is designed to run on the viapath genomics server and creates a trend analysis report for each test type (WES, custom panels) using data files output by multiqc.
 
@@ -41,3 +41,7 @@ This script is designed to run on the viapath genomics server and creates a tren
 * WES runs are defined by the presence of NGS and WES in the run name
 * PANEL runs are defined by the presence of NGS and absence of 'WES' in the run name
 * SWIFT runs are defined by the presence of ONC in the run name
+
+### Development mode
+* The script can be run during development using the argument '--dev'
+* This provides an alternative path for outputs to prevent live reports from being altered
