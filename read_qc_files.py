@@ -370,11 +370,14 @@ def check_for_update():
 
 def main():
     args = get_arguments()
+    # If the user runs the script during development
     if args.dev:
         for runtype in config.run_types:
             t = trend_analysis(input_folder=config.input_folder, output_folder=config.dev_output_folder, images_folder=config.dev_images_folder, runtype=runtype)
             t.call_tools()
             copyfile(src=config.index_file,dst=config.dev_index_file)
+
+   # If the script is run in the production environment
     else:
         if check_for_update():
             for runtype in config.run_types:
