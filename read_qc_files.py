@@ -74,6 +74,8 @@ class trend_analysis:
                             self.plots.append(self.create_tool_plot(tool))
         # after looping through all tools generate report
         self.generate_report()
+        # generate archive html
+        self.generate_archive_html()
 
     def create_tool_plot(self, tool):
         """
@@ -147,7 +149,14 @@ class trend_analysis:
         pdfkit_config = pdfkit.configuration(wkhtmltopdf=config.wkhtmltopdf_path)
         # using the pdfkit package, specify the html file to be converted, name the pdf kit using the timestamp and run type
         pdfkit.from_file(html_path, os.path.join(self.archive_folder, str(self.filename_timestamp) + "_" + self.runtype + "_trend_report.pdf"), configuration=pdfkit_config, options=pdfkit_options)
-            
+
+    def generate_archive_html(self):
+        html_path = os.path.join(self.output_folder,"archive.html")
+        archiveDirectory = os.listdir(self.archive_folder)
+        with open(html_path, "wb") as html_file:
+            html_file.write('<html><head align="center">ARCHIVED TREND ANALYSIS REPORTS</head><body><ul>')
+            html_file.writelines(['<li><a href="archive/%s">%s</a></li>' % (f, f) for f in archiveDirectory])
+            html_file.write('</ul></body></html>')
 
 def table(tool, dictionary):
     """
