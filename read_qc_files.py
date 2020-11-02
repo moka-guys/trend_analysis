@@ -29,7 +29,7 @@ def get_arguments():
 class trend_analysis:
     """
     """
-    def __init__(self, input_folder, output_folder, runtype, images_folder):
+    def __init__(self, input_folder, output_folder, runtype, images_folder, archive_folder):
         self.timestamp = datetime.datetime.now().strftime('%d-%B-%Y %H:%M')
         self.filename_timestamp = datetime.datetime.now().strftime('%y%m%d_%H_%M')
         self.dictionary = OrderedDict({})
@@ -38,6 +38,7 @@ class trend_analysis:
         self.input_folder = input_folder
         self.output_folder = output_folder
         self.images_folder = images_folder
+        self.archive_folder = archive_folder
 
     def call_tools(self):
         """
@@ -145,7 +146,7 @@ class trend_analysis:
         pdfkit_options = {'enable-local-file-access': None, "quiet": ''}
         pdfkit_config = pdfkit.configuration(wkhtmltopdf=config.wkhtmltopdf_path)
         # using the pdfkit package, specify the html file to be converted, name the pdf kit using the timestamp and run type
-        pdfkit.from_file(html_path, os.path.join(config.archive_folder, str(self.filename_timestamp) + "_" + self.runtype + "_trend_report.pdf"), configuration=pdfkit_config, options=pdfkit_options)
+        pdfkit.from_file(html_path, os.path.join(self.archive_folder, str(self.filename_timestamp) + "_" + self.runtype + "_trend_report.pdf"), configuration=pdfkit_config, options=pdfkit_options)
             
 
 def table(tool, dictionary):
@@ -373,7 +374,9 @@ def main():
     # If the user runs the script during development
     if args.dev:
         for runtype in config.run_types:
-            t = trend_analysis(input_folder=config.input_folder, output_folder=config.dev_output_folder, images_folder=config.dev_images_folder, runtype=runtype)
+            t = trend_analysis(input_folder=config.input_folder, output_folder=config.dev_output_folder,
+                               images_folder=config.dev_images_folder, runtype=runtype,
+                               archive_folder=config.dev_archive_folder)
             t.call_tools()
             copyfile(src=config.index_file,dst=config.dev_index_file)
 
@@ -381,7 +384,9 @@ def main():
     else:
         if check_for_update():
             for runtype in config.run_types:
-                t=trend_analysis(input_folder=config.input_folder,output_folder=config.output_folder, images_folder=config.images_folder, runtype=runtype)
+                t=trend_analysis(input_folder=config.input_folder,output_folder=config.output_folder,
+                                 images_folder=config.images_folder, runtype=runtype,
+                                 archive_folder=config.archive_folder)
                 t.call_tools()
 
 

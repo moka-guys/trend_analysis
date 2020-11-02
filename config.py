@@ -9,14 +9,15 @@ output_folder = "/var/www/html/mokaguys/multiqc/trend_analysis"
 images_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/images/"
 logopath = "images/viapathlogo.png"
 template_dir = 'html_template'
+archive_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/archive"
 
 # development folder paths
 dev_output_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis"
 dev_images_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/images/"
 dev_index_file = "/var/www/html/mokaguys/dev/multiqc/index.html"
+dev_archive_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive"
 
 # pdf creation
-archive_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/archive"
 wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
 
 run_types = ["WES", "PANEL"]
