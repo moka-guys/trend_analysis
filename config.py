@@ -20,7 +20,7 @@ dev_archive_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive"
 # pdf creation
 wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
 
-run_types = ["WES", "PANEL"]
+run_types = ["WES", "PANEL", "SWIFT"]
 #run_types = ["WES", "PANEL", "SWIFT"]
 
 # This defines the order plots appear in the report (top to bottom) - Only plots in this list will be included on the report
