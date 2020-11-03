@@ -20,8 +20,9 @@ dev_archive_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive"
 # pdf creation
 wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
 
-run_types = ["WES", "PANEL", "SWIFT"]
-#run_types = ["WES", "PANEL", "SWIFT"]
+run_types = ["WES", "PANEL", "SWIFT", "NB552085", "NB551068", "M02353", "M02631", "A01229"]
+#run_types = panels and individual sequencers
+
 
 # This defines the order plots appear in the report (top to bottom) - Only plots in this list will be included on the report
 plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","contamination"]
@@ -38,13 +39,18 @@ tool_settings = {
         "lower_lim_linestyle":"",
         "lower_lim_linecolour":"",
         "upper_lim_linecolour":"",
-	"upper_lim": False,
-	"upper_lim_label":False,
+	    "upper_lim": False,
+	    "upper_lim_label":False,
         "lower_lim": False,
-	"lower_lim_label":False,
-	"WES":True,
-	"PANEL":True,
-	"ONC":True
+	    "lower_lim_label":False,
+	    "WES":True,
+	    "PANEL":True,
+	    "ONC":True,
+        "NB552085":True,
+        "NB551068":True,
+        "M02353":True,
+        "M02631":True,
+        "A01229":True
     },
     "picard_insertsize":{
         "function":"parse_multiqc_output",
@@ -60,13 +66,18 @@ tool_settings = {
         "lower_lim_linestyle":"",
         "lower_lim_linecolour":"",
         "upper_lim_linecolour":"",
-	"upper_lim": False,
-	"upper_lim_label":False,
+	    "upper_lim": False,
+	    "upper_lim_label":False,
         "lower_lim": False,
-	"lower_lim_label":False,
-	"WES":True,
-	"PANEL":True,
-	"ONC":False
+	    "lower_lim_label":False,
+	    "WES":True,
+	    "PANEL":True,
+	    "ONC":False,
+        "NB552085":False,
+        "NB551068":False,
+        "M02353":False,
+        "M02631":False,
+        "A01229":False
     },
     "q30_percent":{
         "function":"parse_multiqc_output",
@@ -83,12 +94,17 @@ tool_settings = {
         "lower_lim_linecolour":"",
         "upper_lim_linecolour":"",
         "upper_lim": False,
-	"upper_lim_label":False,
+	    "upper_lim_label":False,
         "lower_lim": False,
-	"lower_lim_label":False,
-	"WES":True,
-	"PANEL":True,
-	"ONC":False
+	    "lower_lim_label":False,
+	    "WES":True,
+	    "PANEL":True,
+	    "ONC":False,
+        "NB552085": True,
+        "NB551068": True,
+        "M02353": True,
+        "M02631": True,
+        "A01229": True
     },
     "target_bases_at_30X":{
         "function":"parse_multiqc_output",
@@ -97,7 +113,7 @@ tool_settings = {
         "name_column":1,
         "column_of_interest":10,
         "header_present":True,
-	"conversion_to_percent":True,
+	    "conversion_to_percent":True,
         "plot_title":"target_bases_at_30X",
         "plot_text":"Boxplot showing the % of bases in the target regions which are covered at >= 30X.",
         "upper_lim_linestyle":"dashed",
@@ -110,7 +126,12 @@ tool_settings = {
         "lower_lim_label": "90% at 30X",
         "WES":False,
         "PANEL":True,
-        "ONC":False
+        "ONC":False,
+        "NB552085": False,
+        "NB551068": False,
+        "M02353": False,
+        "M02631": False,
+        "A01229": False
     },
     "target_bases_at_20X":{
         "function":"parse_multiqc_output",
@@ -130,9 +151,14 @@ tool_settings = {
         "upper_lim_label": "95% at 20X",
         "lower_lim": 90,
         "lower_lim_label": "90% at 20X",
-	"WES":True,
-	"PANEL":False,
-	"ONC":False
+	    "WES":True,
+	    "PANEL":False,
+	    "ONC":False,
+        "NB552085": False,
+        "NB551068": False,
+        "M02353": False,
+        "M02631": False,
+        "A01229": False,
     },
     "on_target_vs_selected":{
         "function":"parse_multiqc_output",
@@ -148,13 +174,18 @@ tool_settings = {
         "lower_lim_linestyle":"",
         "lower_lim_linecolour":"",
         "upper_lim_linecolour":"",
-	"upper_lim": False,
-	"upper_lim_label":False,
+	    "upper_lim": False,
+	    "upper_lim_label":False,
         "lower_lim": False,
-	"lower_lim_label":False,
-	"WES":True,
-	"PANEL":True,
-	"ONC":False
+	    "lower_lim_label":False,
+	    "WES":True,
+	    "PANEL":True,
+	    "ONC":False,
+        "NB552085": False,
+        "NB551068": False,
+        "M02353": False,
+        "M02631": False,
+        "A01229": False
     },
     "contamination":{
         "function":"parse_multiqc_output",
@@ -170,13 +201,18 @@ tool_settings = {
         "upper_lim_linestyle":"solid",
         "lower_lim_linecolour":"",
         "upper_lim_linecolour":'r',
-	"upper_lim": 0.03,
-	"upper_lim_label":False,
+	    "upper_lim": 0.03,
+	    "upper_lim_label":False,
         "lower_lim": False,
-	"lower_lim_label":False,
-	"WES":True,
-	"PANEL":False,
-	"ONC":False
+	    "lower_lim_label":False,
+	    "WES":True,
+	    "PANEL":False,
+	    "ONC":False,
+        "NB552085": False,
+        "NB551068": False,
+        "M02353": False,
+        "M02631": False,
+        "A01229": False
     }
 }
 
