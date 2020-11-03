@@ -254,6 +254,16 @@ def sorted_runs(run_list, runtype):
             dates[(int(run.split("_")[1]))] = run
         if runtype == "SWIFT" and "ONC" in run:
             dates[(int(run.split("_")[1]))] = run
+        if runtype == "NB552085" and "NB552085" in run:
+            dates[(int(run.split("_")[1]))] = run
+        if runtype == "NB551068" and "NB551068" in run:
+            dates[(int(run.split("_")[1]))] = run
+        if runtype == "M02353" and "M02353" in run:
+            dates[(int(run.split("_")[1]))] = run
+        if runtype == "M02631" and "M02631" in run:
+            dates[(int(run.split("_")[1]))] = run
+        if runtype == "A01229" and "A01229" in run:
+            dates[(int(run.split("_")[1]))] = run
 
     # sort the list of dates, identify the full run name and append to sorted list
     sortedruns= []
