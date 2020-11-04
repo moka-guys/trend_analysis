@@ -152,10 +152,10 @@ class trend_analysis:
 
     def generate_archive_html(self):
         html_path = os.path.join(self.output_folder,"archive.html")
-        archiveDirectory = os.listdir(self.archive_folder)
+        archive_directory = os.listdir(self.archive_folder)
         with open(html_path, "wb") as html_file:
             html_file.write('<html><head align="center">ARCHIVED TREND ANALYSIS REPORTS</head><body><ul>')
-            html_file.writelines(['<li><a href="archive/%s">%s</a></li>' % (f, f) for f in archiveDirectory])
+            html_file.writelines(['<li><a href="archive/%s">%s</a></li>' % (f, f) for f in archive_directory])
             html_file.write('</ul></body></html>')
 
 def table(tool, dictionary):
@@ -175,7 +175,7 @@ def table(tool, dictionary):
     rows_html=""
     # define the html for a table row
     html_table_row="<tr><td >{}</td><td>{}</td></tr>"
-    # for each sample, add to rows_html with the html_table_row, witht he placeholders filled
+    # for each sample, add to rows_html with the html_table_row, with the placeholders filled
     # we need to sort the dictionary, as the order of dictionary keys aren't maintained (like a list is).
     for i in sorted(dictionary[tool]):
         rows_html+=html_table_row.format(i, dictionary[tool][i])
@@ -230,7 +230,7 @@ def box_plot(tool, dictionary, runtype, images_folder):
     # return the path to the save image
     return html_image_path
 
-def sorted_runs(run_list, runtype):
+def sorted_runs(run_list, input_folder, runtype):
     """
     The runs should be plotted in date order, oldest to newest.
     The runs included in the analysis are saved in run specific folders, named with the runfolder name (002_YYMMDD_[*WES*,*NGS*,*ONC*])
@@ -245,25 +245,33 @@ def sorted_runs(run_list, runtype):
     dates = {}
     # for run in folder
     for run in run_list:
-        # need to filter for only runs of this runtype
+        # need to filter for only runs of this runtype, and only runs with non-empty runfolders
         # if run of interest, extract the date and add this as a key to the  dict
         # add run name as the value
         if runtype == "WES" and "WES" in run:
-            dates[(int(run.split("_")[1]))] = run
+            if not len(os.listdir(input_folder +'/'+ run)) == 0:
+                dates[(int(run.split("_")[1]))] = run
         if runtype == "PANEL" and "NGS" in run and "WES" not in run:
-            dates[(int(run.split("_")[1]))] = run
+            if not len(os.listdir(input_folder +'/'+ run)) == 0:
+                dates[(int(run.split("_")[1]))] = run
         if runtype == "SWIFT" and "ONC" in run:
-            dates[(int(run.split("_")[1]))] = run
-        if runtype == "NB552085" and "NB552085" in run:
-            dates[(int(run.split("_")[1]))] = run
-        if runtype == "NB551068" and "NB551068" in run:
-            dates[(int(run.split("_")[1]))] = run
-        if runtype == "M02353" and "M02353" in run:
-            dates[(int(run.split("_")[1]))] = run
-        if runtype == "M02631" and "M02631" in run:
-            dates[(int(run.split("_")[1]))] = run
-        if runtype == "A01229" and "A01229" in run:
-            dates[(int(run.split("_")[1]))] = run
+            if not len(os.listdir(input_folder +'/'+ run)) == 0:
+                dates[(int(run.split("_")[1]))] = run
+        if runtype == "NEXTSEQA" and "NB552085" in run:
+            if not len(os.listdir(input_folder +'/'+ run)) == 0:
+                dates[(int(run.split("_")[1]))] = run
+        if runtype == "NEXTSEQB" and "NB551068" in run:
+            if not len(os.listdir(input_folder +'/'+ run)) == 0:
+                dates[(int(run.split("_")[1]))] = run
+        if runtype == "MISEQA" and "M02353" in run:
+            if not len(os.listdir(input_folder +'/'+ run)) == 0:
+                dates[(int(run.split("_")[1]))] = run
+        if runtype == "MISEQB" and "M02631" in run:
+            if not len(os.listdir(input_folder +'/'+ run)) == 0:
+                dates[(int(run.split("_")[1]))] = run
+        if runtype == "NOVASEQ" and "A01229" in run:
+            if not len(os.listdir(input_folder +'/'+ run)) == 0:
+                dates[(int(run.split("_")[1]))] = run
 
     # sort the list of dates, identify the full run name and append to sorted list
     sortedruns= []
@@ -287,7 +295,7 @@ def describe_run_names(tool, input_folder, runtype):
         dictionary with key as the order, and value the run name
     """
     # get date sorted list of runfolders
-    sorted_run_list = sorted_runs(os.listdir(input_folder), runtype)
+    sorted_run_list = sorted_runs(os.listdir(input_folder), input_folder, runtype)
     run_name_dictionary = {}
     # build dictionary with key as the order and value as run name.
     # Add oldest and newest to first and last
@@ -321,7 +329,7 @@ def parse_multiqc_output(tool, input_folder, runtype):
     tool_dict=OrderedDict({})
     # for each run find the file and pass it to return_columns, which generates a list
     # add this to the dictionary
-    for run in sorted_runs(os.listdir(input_folder), runtype):
+    for run in sorted_runs(os.listdir(input_folder), input_folder, runtype):
         input_file = find(input_file_name,os.path.join(input_folder,run))
         if input_file:
             tool_dict[run] = return_columns(input_file,tool)
@@ -397,7 +405,7 @@ def main():
                                images_folder=config.dev_images_folder, runtype=runtype,
                                archive_folder=config.dev_archive_folder)
             t.call_tools()
-            copyfile(src=config.index_file,dst=config.dev_index_file)
+        copyfile(src=config.index_file,dst=config.dev_index_file)
 
    # If the script is run in the production environment
     else:

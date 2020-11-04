@@ -20,7 +20,7 @@ dev_archive_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive"
 # pdf creation
 wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
 
-run_types = ["WES", "PANEL", "SWIFT", "NB552085", "NB551068", "M02353", "M02631", "A01229"]
+run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQA", "NEXTSEQB", "MISEQA", "MISEQB", "NOVASEQ"]
 #run_types = panels and individual sequencers
 
 
@@ -45,12 +45,12 @@ tool_settings = {
 	    "lower_lim_label":False,
 	    "WES":True,
 	    "PANEL":True,
-	    "ONC":True,
-        "NB552085":True,
-        "NB551068":True,
-        "M02353":True,
-        "M02631":True,
-        "A01229":True
+	    "SWIFT":True,
+        "NEXTSEQA":True,
+        "NEXTSEQB":True,
+        "MISEQA":True,
+        "MISEQB":True,
+        "NOVASEQ":True
     },
     "picard_insertsize":{
         "function":"parse_multiqc_output",
@@ -72,12 +72,12 @@ tool_settings = {
 	    "lower_lim_label":False,
 	    "WES":True,
 	    "PANEL":True,
-	    "ONC":False,
-        "NB552085":False,
-        "NB551068":False,
-        "M02353":False,
-        "M02631":False,
-        "A01229":False
+	    "SWIFT":False,
+        "NEXTSEQA":False,
+        "NEXTSEQB":False,
+        "MISEQA":False,
+        "MISEQB":False,
+        "NOVASEQ":False
     },
     "q30_percent":{
         "function":"parse_multiqc_output",
@@ -99,12 +99,12 @@ tool_settings = {
 	    "lower_lim_label":False,
 	    "WES":True,
 	    "PANEL":True,
-	    "ONC":False,
-        "NB552085": True,
-        "NB551068": True,
-        "M02353": True,
-        "M02631": True,
-        "A01229": True
+	    "SWIFT":False,
+        "NEXTSEQA":True,
+        "NEXTSEQB":True,
+        "MISEQA":True,
+        "MISEQB":True,
+        "NOVASEQ":True
     },
     "target_bases_at_30X":{
         "function":"parse_multiqc_output",
@@ -126,12 +126,12 @@ tool_settings = {
         "lower_lim_label": "90% at 30X",
         "WES":False,
         "PANEL":True,
-        "ONC":False,
-        "NB552085": False,
-        "NB551068": False,
-        "M02353": False,
-        "M02631": False,
-        "A01229": False
+        "SWIFT":False,
+        "NEXTSEQA":False,
+        "NEXTSEQB":False,
+        "MISEQA":False,
+        "MISEQB":False,
+        "NOVASEQ":False
     },
     "target_bases_at_20X":{
         "function":"parse_multiqc_output",
@@ -153,12 +153,12 @@ tool_settings = {
         "lower_lim_label": "90% at 20X",
 	    "WES":True,
 	    "PANEL":False,
-	    "ONC":False,
-        "NB552085": False,
-        "NB551068": False,
-        "M02353": False,
-        "M02631": False,
-        "A01229": False,
+	    "SWIFT":False,
+        "NEXTSEQA":False,
+        "NEXTSEQB":False,
+        "MISEQA":False,
+        "MISEQB":False,
+        "NOVASEQ":False
     },
     "on_target_vs_selected":{
         "function":"parse_multiqc_output",
@@ -180,12 +180,12 @@ tool_settings = {
 	    "lower_lim_label":False,
 	    "WES":True,
 	    "PANEL":True,
-	    "ONC":False,
-        "NB552085": False,
-        "NB551068": False,
-        "M02353": False,
-        "M02631": False,
-        "A01229": False
+	    "SWIFT":False,
+        "NEXTSEQA":False,
+        "NEXTSEQB":False,
+        "MISEQA":False,
+        "MISEQB":False,
+        "NOVASEQ":False
     },
     "contamination":{
         "function":"parse_multiqc_output",
@@ -207,12 +207,12 @@ tool_settings = {
 	    "lower_lim_label":False,
 	    "WES":True,
 	    "PANEL":False,
-	    "ONC":False,
-        "NB552085": False,
-        "NB551068": False,
-        "M02353": False,
-        "M02631": False,
-        "A01229": False
+	    "SWIFT":False,
+        "NEXTSEQA":False,
+        "NEXTSEQB":False,
+        "MISEQA":False,
+        "MISEQB":False,
+        "NOVASEQ":False
     }
 }
 
