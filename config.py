@@ -20,7 +20,7 @@ dev_archive_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive"
 # pdf creation
 wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
 
-run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQA", "NEXTSEQB", "MISEQA", "MISEQB", "NOVASEQ"]
+run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_LUIGI", "NEXTSEQ_MARIO", "MISEQ_ONC", "MISEQ_DNA", "NOVASEQ_PIKACHU"]
 #run_types = panels and individual sequencers
 
 
@@ -46,11 +46,11 @@ tool_settings = {
 	    "WES":True,
 	    "PANEL":True,
 	    "SWIFT":True,
-        "NEXTSEQA":True,
-        "NEXTSEQB":True,
-        "MISEQA":True,
-        "MISEQB":True,
-        "NOVASEQ":True
+        "NEXTSEQ_LUIGI":True,
+        "NEXTSEQ_MARIO":True,
+        "MISEQ_ONC":True,
+        "MISEQ_DNA":True,
+        "NOVASEQ_PIKACHU":True
     },
     "picard_insertsize":{
         "function":"parse_multiqc_output",
@@ -73,11 +73,11 @@ tool_settings = {
 	    "WES":True,
 	    "PANEL":True,
 	    "SWIFT":False,
-        "NEXTSEQA":False,
-        "NEXTSEQB":False,
-        "MISEQA":False,
-        "MISEQB":False,
-        "NOVASEQ":False
+        "NEXTSEQ_LUIGI": False,
+        "NEXTSEQ_MARIO": False,
+        "MISEQ_ONC": False,
+        "MISEQ_DNA": False,
+        "NOVASEQ_PIKACHU": False
     },
     "q30_percent":{
         "function":"parse_multiqc_output",
@@ -99,11 +99,12 @@ tool_settings = {
 	    "lower_lim_label":False,
 	    "WES":False,
 	    "PANEL":False,
-        "NEXTSEQA":True,
-        "NEXTSEQB":True,
-        "MISEQA":True,
-        "MISEQB":True,
-        "NOVASEQ":True
+        "SWIFT":False,
+        "NEXTSEQ_LUIGI": True,
+        "NEXTSEQ_MARIO": True,
+        "MISEQ_ONC": True,
+        "MISEQ_DNA": True,
+        "NOVASEQ_PIKACHU": True
     },
     "target_bases_at_30X":{
         "function":"parse_multiqc_output",
@@ -126,11 +127,11 @@ tool_settings = {
         "WES":False,
         "PANEL":True,
         "SWIFT":False,
-        "NEXTSEQA":False,
-        "NEXTSEQB":False,
-        "MISEQA":False,
-        "MISEQB":False,
-        "NOVASEQ":False
+        "NEXTSEQ_LUIGI": False,
+        "NEXTSEQ_MARIO": False,
+        "MISEQ_ONC": False,
+        "MISEQ_DNA": False,
+        "NOVASEQ_PIKACHU": False
     },
     "target_bases_at_20X":{
         "function":"parse_multiqc_output",
@@ -153,11 +154,11 @@ tool_settings = {
 	    "WES":True,
 	    "PANEL":False,
 	    "SWIFT":False,
-        "NEXTSEQA":False,
-        "NEXTSEQB":False,
-        "MISEQA":False,
-        "MISEQB":False,
-        "NOVASEQ":False
+        "NEXTSEQ_LUIGI": False,
+        "NEXTSEQ_MARIO": False,
+        "MISEQ_ONC": False,
+        "MISEQ_DNA": False,
+        "NOVASEQ_PIKACHU": False
     },
     "on_target_vs_selected":{
         "function":"parse_multiqc_output",
@@ -180,11 +181,11 @@ tool_settings = {
 	    "WES":True,
 	    "PANEL":True,
 	    "SWIFT":False,
-        "NEXTSEQA":False,
-        "NEXTSEQB":False,
-        "MISEQA":False,
-        "MISEQB":False,
-        "NOVASEQ":False
+        "NEXTSEQ_LUIGI": False,
+        "NEXTSEQ_MARIO": False,
+        "MISEQ_ONC": False,
+        "MISEQ_DNA": False,
+        "NOVASEQ_PIKACHU": False
     },
     "contamination":{
         "function":"parse_multiqc_output",
@@ -207,11 +208,11 @@ tool_settings = {
 	    "WES":True,
 	    "PANEL":False,
 	    "SWIFT":False,
-        "NEXTSEQA":False,
-        "NEXTSEQB":False,
-        "MISEQA":False,
-        "MISEQB":False,
-        "NOVASEQ":False
+        "NEXTSEQ_LUIGI": False,
+        "NEXTSEQ_MARIO": False,
+        "MISEQ_ONC": False,
+        "MISEQ_DNA": False,
+        "NOVASEQ_PIKACHU": False
     }
 }
 

@@ -257,19 +257,19 @@ def sorted_runs(run_list, input_folder, runtype):
         if runtype == "SWIFT" and "ONC" in run:
             if not len(os.listdir(input_folder +'/'+ run)) == 0:
                 dates[(int(run.split("_")[1]))] = run
-        if runtype == "NEXTSEQA" and "NB552085" in run:
+        if runtype == "NEXTSEQ_LUIGI" and "NB552085" in run:
             if not len(os.listdir(input_folder +'/'+ run)) == 0:
                 dates[(int(run.split("_")[1]))] = run
-        if runtype == "NEXTSEQB" and "NB551068" in run:
+        if runtype == "NEXTSEQ_MARIO" and "NB551068" in run:
             if not len(os.listdir(input_folder +'/'+ run)) == 0:
                 dates[(int(run.split("_")[1]))] = run
-        if runtype == "MISEQA" and "M02353" in run:
+        if runtype == "MISEQ_ONC" and "M02353" in run:
             if not len(os.listdir(input_folder +'/'+ run)) == 0:
                 dates[(int(run.split("_")[1]))] = run
-        if runtype == "MISEQB" and "M02631" in run:
+        if runtype == "MISEQ_DNA" and "M02631" in run:
             if not len(os.listdir(input_folder +'/'+ run)) == 0:
                 dates[(int(run.split("_")[1]))] = run
-        if runtype == "NOVASEQ" and "A01229" in run:
+        if runtype == "NOVASEQ_PIKACHU" and "A01229" in run:
             if not len(os.listdir(input_folder +'/'+ run)) == 0:
                 dates[(int(run.split("_")[1]))] = run
 
