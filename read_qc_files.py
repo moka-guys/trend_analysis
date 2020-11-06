@@ -327,12 +327,13 @@ def parse_multiqc_output(tool, input_folder, runtype):
     # get the name of the raw data file
     input_file_name = config.tool_settings[tool]["input_file"]
     tool_dict=OrderedDict({})
+
     # for each run find the file and pass it to return_columns, which generates a list
     # add this to the dictionary
     for run in sorted_runs(os.listdir(input_folder), input_folder, runtype):
-        input_file = find(input_file_name,os.path.join(input_folder,run))
+        input_file = find(input_file_name, os.path.join(input_folder, run))
         if input_file:
-            tool_dict[run] = return_columns(input_file,tool)
+            tool_dict[run] = return_columns(input_file, tool)
     return tool_dict
 
 def find(name, path):
@@ -340,14 +341,16 @@ def find(name, path):
     Use os.walk to recursively search through all files in a folder
     Return the path to identified file
     Input:
-        filename - file to look for
+        name - filename from config file
+        filename - full file name obtained using name
         path - path to the file containing all QC files for that run
     Returns:
         Path to file of interest
     """
     for root, dirs, files in os.walk(path):
-        if name in files:
-            return os.path.join(root, name)
+        for filename in files:
+            if name in filename:
+                return os.path.join(root, filename)
     print "no output named {} for run {}".format(name, path)
     return False
 
