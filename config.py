@@ -25,7 +25,7 @@ run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_LUIGI", "NEXTSEQ_MARIO", "MISEQ_O
 
 
 # This defines the order plots appear in the report (top to bottom) - Only plots in this list will be included on the report
-plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","contamination"]
+plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","cluster_density","contamination"]
 
 # tool specific settings
 tool_settings = {
@@ -213,6 +213,33 @@ tool_settings = {
         "MISEQ_ONC": False,
         "MISEQ_DNA": False,
         "NOVASEQ_PIKACHU": False
+    },
+    "cluster_density":{
+        "function":"parse_multiqc_output",
+        "plot_type":"box_plot",
+        "input_file":"illumina_lane_metrics",
+        "name_column":1,
+        "column_of_interest":1,
+        "conversion_to_percent":False,
+        "header_present":True,
+        "plot_title":"Cluster density",
+        "plot_text":"ADD DESCRIPTION HERE",
+        "upper_lim_linestyle":"",
+        "lower_lim_linestyle":"",
+        "lower_lim_linecolour":"",
+        "upper_lim_linecolour":"",
+	    "upper_lim": False,
+	    "upper_lim_label":False,
+        "lower_lim": False,
+	    "lower_lim_label":False,
+	    "WES":False,
+	    "PANEL":False,
+	    "SWIFT":False,
+        "NEXTSEQ_LUIGI":True,
+        "NEXTSEQ_MARIO":True,
+        "MISEQ_ONC":True,
+        "MISEQ_DNA":True,
+        "NOVASEQ_PIKACHU":True
     }
 }
 
