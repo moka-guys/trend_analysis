@@ -369,17 +369,28 @@ def return_columns(file_path,tool):
     # open file
     with open(file_path,'r') as input_file:
         # enumerate the list of lines as loop through it so we can skip the header if needed
-        for linecount,line in enumerate(input_file):
-            if config.tool_settings[tool]["header_present"] and linecount == 0:
+        for linecount, line in enumerate(input_file):
+            # if the tool is the cluster density plot skip the first seven rows as these are headers
+            if config.tool_settings[tool]["input_file"] == "illumina_lane_metrics":
+                if config.tool_settings[tool]["header_present"] and 0<=linecount<=6:
+                    pass
+                else:
+                    # NEED TO TELL IT TO SKIP BLANK LINES!!!
+                    # split the line, pull out column of interest, divide by 1000, and add to list
+                    if not line.isspace():
+                        measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])/1000
+                        to_return.append(measurement)
+            # for all other tools that have a header present, skip the header row
+            elif config.tool_settings[tool]["header_present"] and linecount == 0:
                 pass
             else:
+                # for all other rows that aren't header rows
                 # split the line and pull out column of interest and add to list
                 if config.tool_settings[tool]["conversion_to_percent"]:
                     measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])*100
                 else:
                     measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])
                 to_return.append(measurement)
-
     # return list
     return to_return
 

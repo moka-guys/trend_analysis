@@ -20,7 +20,7 @@ dev_archive_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive"
 # pdf creation
 wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
 
-run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_LUIGI", "NEXTSEQ_MARIO", "MISEQ_ONC", "MISEQ_DNA", "NOVASEQ_PIKACHU"]
+run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC", "MISEQ_DNA", "NOVASEQ_PIKACHU"]
 #run_types = panels and individual sequencers
 
 
@@ -141,7 +141,7 @@ tool_settings = {
         "column_of_interest":33,
         "conversion_to_percent":True,
         "header_present":True,
-        "plot_title":"target_bases_at_20X",
+        "plot_title":"Target Bases at 20X",
         "plot_text":"Boxplot showing the % of bases in the target regions which are covered at >= 20X.\nSamples below 90% are failed. Samples above 95% pass. Samples between 90-95% may be analysed with caution" ,
         "upper_lim_linestyle":"dashed",
         "lower_lim_linestyle":"solid",
@@ -218,12 +218,12 @@ tool_settings = {
         "function":"parse_multiqc_output",
         "plot_type":"box_plot",
         "input_file":"illumina_lane_metrics",
-        "name_column":1,
-        "column_of_interest":1,
+        "name_column":0,
+        "column_of_interest":0,
         "conversion_to_percent":False,
         "header_present":True,
-        "plot_title":"Cluster density",
-        "plot_text":"ADD DESCRIPTION HERE",
+        "plot_title":"Lane cluster density",
+        "plot_text":"Cluster density per lane of Illumina sequencing run, showing cluster density in thousands (K) of clusters per mm2 of flowcell area for each sequencing lane. Optimal density for NextSeq is 170-220 K/mm2, and MiSeq is 1000-1400K/mm2.",
         "upper_lim_linestyle":"",
         "lower_lim_linestyle":"",
         "lower_lim_linecolour":"",
@@ -232,14 +232,14 @@ tool_settings = {
 	    "upper_lim_label":False,
         "lower_lim": False,
 	    "lower_lim_label":False,
-	    "WES":False,
-	    "PANEL":False,
-	    "SWIFT":False,
-        "NEXTSEQ_LUIGI":True,
-        "NEXTSEQ_MARIO":True,
-        "MISEQ_ONC":True,
-        "MISEQ_DNA":True,
-        "NOVASEQ_PIKACHU":True
+	    "WES":True,
+	    "PANEL":True,
+	    "SWIFT":True,
+        "NEXTSEQ_LUIGI":False,
+        "NEXTSEQ_MARIO":False,
+        "MISEQ_ONC":False,
+        "MISEQ_DNA":False,
+        "NOVASEQ_PIKACHU":False
     }
 }
 
