@@ -12,6 +12,7 @@ template_dir = 'html_template'
 archive_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/archive"
 
 # development folder paths
+dev_input_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/test_multiqc_data"
 dev_output_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis"
 dev_images_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/images/"
 dev_index_file = "/var/www/html/mokaguys/dev/multiqc/index.html"
@@ -23,9 +24,8 @@ wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
 run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC", "MISEQ_DNA", "NOVASEQ_PIKACHU"]
 #run_types = panels and individual sequencers
 
-
 # This defines the order plots appear in the report (top to bottom) - Only plots in this list will be included on the report
-plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","cluster_density","contamination"]
+plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","cluster_density_MiSeq","cluster_density_NextSeq","contamination"]
 
 # tool specific settings
 tool_settings = {
@@ -43,7 +43,7 @@ tool_settings = {
 	    "upper_lim_label":False,
         "lower_lim": False,
 	    "lower_lim_label":False,
-	    "WES":True,
+        "WES":True,
 	    "PANEL":True,
 	    "SWIFT":True,
         "NEXTSEQ_LUIGI":True,
@@ -70,7 +70,7 @@ tool_settings = {
 	    "upper_lim_label":False,
         "lower_lim": False,
 	    "lower_lim_label":False,
-	    "WES":True,
+        "WES":True,
 	    "PANEL":True,
 	    "SWIFT":False,
         "NEXTSEQ_LUIGI": False,
@@ -97,7 +97,7 @@ tool_settings = {
 	    "upper_lim_label":False,
         "lower_lim": False,
 	    "lower_lim_label":False,
-	    "WES":False,
+        "WES":False,
 	    "PANEL":False,
         "SWIFT":False,
         "NEXTSEQ_LUIGI": True,
@@ -151,7 +151,7 @@ tool_settings = {
         "upper_lim_label": "95% at 20X",
         "lower_lim": 90,
         "lower_lim_label": "90% at 20X",
-	    "WES":True,
+        "WES":True,
 	    "PANEL":False,
 	    "SWIFT":False,
         "NEXTSEQ_LUIGI": False,
@@ -178,7 +178,7 @@ tool_settings = {
 	    "upper_lim_label":False,
         "lower_lim": False,
 	    "lower_lim_label":False,
-	    "WES":True,
+        "WES":True,
 	    "PANEL":True,
 	    "SWIFT":False,
         "NEXTSEQ_LUIGI": False,
@@ -214,7 +214,7 @@ tool_settings = {
         "MISEQ_DNA": False,
         "NOVASEQ_PIKACHU": False
     },
-    "cluster_density":{
+    "cluster_density_MiSeq":{
         "function":"parse_multiqc_output",
         "plot_type":"box_plot",
         "input_file":"illumina_lane_metrics",
@@ -222,8 +222,8 @@ tool_settings = {
         "column_of_interest":0,
         "conversion_to_percent":False,
         "header_present":True,
-        "plot_title":"Lane cluster density",
-        "plot_text":"Cluster density per lane of Illumina sequencing run, showing cluster density in thousands (K) of clusters per mm2 of flowcell area for each sequencing lane. Optimal density for NextSeq is 170-220 K/mm2, and MiSeq is 1000-1400K/mm2.",
+        "plot_title":"MiSeq Lane cluster density",
+        "plot_text":"MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq is 1200-1400 K/mm2.",
         "upper_lim_linestyle":"",
         "lower_lim_linestyle":"",
         "lower_lim_linecolour":"",
@@ -232,9 +232,36 @@ tool_settings = {
 	    "upper_lim_label":False,
         "lower_lim": False,
 	    "lower_lim_label":False,
-	    "WES":True,
-	    "PANEL":True,
+        "WES":False,
+	    "PANEL":False,
 	    "SWIFT":True,
+        "NEXTSEQ_LUIGI":False,
+        "NEXTSEQ_MARIO":False,
+        "MISEQ_ONC":False,
+        "MISEQ_DNA":False,
+        "NOVASEQ_PIKACHU":False
+    },
+    "cluster_density_NextSeq":{
+        "function":"parse_multiqc_output",
+        "plot_type":"box_plot",
+        "input_file":"illumina_lane_metrics",
+        "name_column":0,
+        "column_of_interest":0,
+        "conversion_to_percent":False,
+        "header_present":True,
+        "plot_title":"NextSeq Lane cluster density",
+        "plot_text":"NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters per mm2 of flowcell area for each sequencing lane. Optimal density for NextSeq is 170-230 K/mm2.",
+        "upper_lim_linestyle":"",
+        "lower_lim_linestyle":"",
+        "lower_lim_linecolour":"",
+        "upper_lim_linecolour":"",
+	    "upper_lim": False,
+	    "upper_lim_label":False,
+        "lower_lim": False,
+	    "lower_lim_label":False,
+        "WES":True,
+	    "PANEL":True,
+	    "SWIFT":False,
         "NEXTSEQ_LUIGI":False,
         "NEXTSEQ_MARIO":False,
         "MISEQ_ONC":False,
