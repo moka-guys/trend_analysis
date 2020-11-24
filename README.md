@@ -6,9 +6,9 @@ This script is designed to run on the viapath genomics server and creates a tren
 * Python2.7
 * python packages as described in requirements.txt
 * python-tk (v2.7.12-1~16.04)
-* wkhtmltopdf (0.12.6-1.xenial_amd64) - When running headless this should be downloaded from github so the repo includes a patches version of QT (not included when instaling from apt repositories)
+* wkhtmltopdf (0.12.6-1.xenial_amd64) - When running headless this should be downloaded from github so the repo includes a patches version of QT (not included when instlaling from apt repositories)
 
-## How does read_qc_files.py work
+## How does read_qc_files.py work?
 ###  Inputs
 * A directory containing one directory per runfolder
 * Tool specific settings (in the config file)
@@ -33,14 +33,25 @@ This script is designed to run on the viapath genomics server and creates a tren
 * The html page is saved to /var/www/html/mokaguys/multiqc/trend_analysis/{runtype}\_trend_report.html
 * A PDF version of the webpage is also saved in /var/www/html/mokaguys/multiqc/trend_analysis/archive named with a time stamp for long term storage
 
-#### Runs included in the report
+### Runs included in the report
 * The runs present on the server are filtered depending on run type and the name parsed to extract the date.
 * The most recent x number of runs are included on the report (where x is defined by config.number_of_runs_to_include)
 
-#### Run types
+### Run types
 * WES runs are defined by the presence of NGS and WES in the run name
 * PANEL runs are defined by the presence of NGS and absence of 'WES' in the run name
 * SWIFT runs are defined by the presence of ONC in the run name
+
+### Sequencer-Specific reports 
+Sequencer-specific reports are also created, defined by the presence of the sequencer-specific identifier for each of the following: 
+* Mario NextSeq 
+* Luigi NextSeq
+* Pikachu NovaSeq 
+* Molecular Oncology’s MiSeq  
+* DNA lab’s MiSeq
+
+### index.html 
+The index.html file contains links to the individual MultiQC reports, and to the WES, Custom Panels and SWIFT trend reports, and the archived reports. It also contains a link to a sequencers.html file which links to each sequencer-specific trend report. 
 
 ### Development mode
 * The script can be run during development using the argument '--dev'
