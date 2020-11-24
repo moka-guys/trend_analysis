@@ -65,7 +65,8 @@ class trend_analysis:
                             # Next determine what plot type is required for this tool (as defined in config)
                             if config.tool_settings[tool]["plot_type"]=="box_plot":
                                 # box_plot function returns the location of a plot it has saved
-                                self.dictionary[tool]["image_location"] = box_plot(tool,self.dictionary,self.runtype, self.images_folder)
+                                self.dictionary[tool]["image_location"] = box_plot(tool, self.dictionary,
+                                                                                       self.runtype, self.images_folder)
                             elif config.tool_settings[tool]["plot_type"]=="table":
                                 # table function returns a html string
                                 self.dictionary[tool]["table_text"] = table(tool,self.dictionary)
@@ -208,7 +209,6 @@ def box_plot(tool, dictionary, runtype, images_folder):
             xlabels.append(str(i)+"\nnewest")
         else:
             xlabels.append(str(i))
-
     # Add the data to the plot
     # dictionary[tool] is a dictionary, with the run name as key, and a list of values as the value
     plt.boxplot(dictionary[tool].values(),labels=xlabels)
@@ -332,6 +332,7 @@ def parse_multiqc_output(tool, input_folder, runtype):
     # add this to the dictionary
     for run in sorted_runs(os.listdir(input_folder), input_folder, runtype):
         input_file = find(input_file_name, os.path.join(input_folder, run))
+        #input_file = select_input_file(input_file_name, input_folder, run, tool)
         if input_file:
             tool_dict[run] = return_columns(input_file, tool)
     return tool_dict
@@ -356,7 +357,9 @@ def find(name, path):
 
 def return_columns(file_path,tool):
     """
-    For a given file, open and for each line (excluding header if required) extract the column of interest as a float
+    For a given file, open and for each line (excluding header if required) extract the column of interest as a float.
+    If the tool is the cluster density plot, skips the first seven rows as these are headers.
+    For all other plots, skips the first row as this is the header.
     Create and return a list of all measurements
     Input:
         filepath - file to parse
@@ -370,27 +373,24 @@ def return_columns(file_path,tool):
     with open(file_path,'r') as input_file:
         # enumerate the list of lines as loop through it so we can skip the header if needed
         for linecount, line in enumerate(input_file):
-            # if the tool is the cluster density plot skip the first seven rows as these are headers
             if config.tool_settings[tool]["input_file"] == "illumina_lane_metrics":
                 if config.tool_settings[tool]["header_present"] and 0<=linecount<=6:
                     pass
                 else:
-                    # NEED TO TELL IT TO SKIP BLANK LINES!!!
-                    # split the line, pull out column of interest, divide by 1000, and add to list
+                    # ignore blank lines, split the line, pull out column of interest, divide by 1000, add to list
                     if not line.isspace():
                         measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])/1000
-                        to_return.append(measurement)
-            # for all other tools that have a header present, skip the header row
-            elif config.tool_settings[tool]["header_present"] and linecount == 0:
-                pass
+                    to_return.append(measurement)
             else:
-                # for all other rows that aren't header rows
-                # split the line and pull out column of interest and add to list
-                if config.tool_settings[tool]["conversion_to_percent"]:
-                    measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])*100
+                if config.tool_settings[tool]["header_present"] and linecount == 0:
+                    pass
                 else:
-                    measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])
-                to_return.append(measurement)
+                    # for all other rows that aren't header rows, split line, pull out column of interest, add to list
+                    if config.tool_settings[tool]["conversion_to_percent"]:
+                        measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])*100
+                    else:
+                        measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])
+                    to_return.append(measurement)
     # return list
     return to_return
 
@@ -415,7 +415,7 @@ def main():
     # If the user runs the script during development
     if args.dev:
         for runtype in config.run_types:
-            t = trend_analysis(input_folder=config.input_folder, output_folder=config.dev_output_folder,
+            t = trend_analysis(input_folder=config.dev_input_folder, output_folder=config.dev_output_folder,
                                images_folder=config.dev_images_folder, runtype=runtype,
                                archive_folder=config.dev_archive_folder)
             t.call_tools()
