@@ -222,11 +222,12 @@ def box_plot(tool, dictionary, runtype, images_folder):
         plt.hlines(config.tool_settings[tool]["lower_lim"],xmin, xmax,label=config.tool_settings[tool]["lower_lim_label"], linestyles=config.tool_settings[tool]["lower_lim_linestyle"],colors=config.tool_settings[tool]["lower_lim_linecolour"])
     # add the x ticks
     plt.xticks()
+    plt.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
     plt.ticklabel_format(axis='y', useOffset=False, style='plain')
     # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
     image_path=os.path.join(images_folder,runtype + "_" + tool+".png")
     html_image_path = "images/"+runtype + "_" + tool+".png"
-    plt.savefig(image_path,bbox_inches="tight",dpi=200)
+    plt.savefig(image_path, bbox_inches="tight",dpi=200)
     # return the path to the save image
     return html_image_path
 
