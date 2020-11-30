@@ -25,7 +25,7 @@ run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_O
 #run_types = panels and individual sequencers
 
 # This defines the order plots appear in the report (top to bottom) - Only plots in this list will be included on the report
-plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","cluster_density_MiSeq","cluster_density_NextSeq","contamination"]
+plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","cluster_density_MiSeq","cluster_density_NextSeq","contamination","properly_paired","pct_off_amplicon"]
 
 # tool specific settings
 tool_settings = {
@@ -169,7 +169,7 @@ tool_settings = {
         "conversion_to_percent":False,
         "header_present":True,
         "plot_title":"On targetvs selected",
-        "plot_text":"The % of on and near bait bases that are on as opposed to near (as defined by the BED file containing the capture regions)." ,
+        "plot_text":"The % of on and near bait bases that are on as opposed to near (as defined by the BED file containing the capture regions)" ,
         "upper_lim_linestyle":"",
         "lower_lim_linestyle":"",
         "lower_lim_linecolour":"",
@@ -223,7 +223,7 @@ tool_settings = {
         "conversion_to_percent":False,
         "header_present":True,
         "plot_title":"MiSeq Lane cluster density",
-        "plot_text":"MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq is 1200-1400 K/mm2.",
+        "plot_text":"MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq is 1200-1400 K/mm2",
         "upper_lim_linestyle":"solid",
         "lower_lim_linestyle":"solid",
         "lower_lim_linecolour":'b',
@@ -250,7 +250,7 @@ tool_settings = {
         "conversion_to_percent":False,
         "header_present":True,
         "plot_title":"NextSeq Lane cluster density",
-        "plot_text":"NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters per mm2 of flowcell area for each sequencing lane. Optimal density for NextSeq is 170-230 K/mm2.",
+        "plot_text":"NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters per mm2 of flowcell area for each sequencing lane. Optimal density for NextSeq is 170-230 K/mm2",
         "upper_lim_linestyle":"solid",
         "lower_lim_linestyle":"solid",
         "lower_lim_linecolour":'b',
@@ -267,6 +267,60 @@ tool_settings = {
         "MISEQ_ONC":False,
         "MISEQ_DNA":False,
         "NOVASEQ_PIKACHU":False
+    },
+    "properly_paired":{
+        "function":"parse_multiqc_output",
+        "plot_type":"box_plot",
+        "input_file":"multiqc_samtools_flagstat.txt",
+        "name_column":0,
+        "column_of_interest":11,
+        "conversion_to_percent":False,
+        "header_present":True,
+        "plot_title":"Properly Paired",
+        "plot_text":"The percentage of QC-passed reads that were properly paired. Properly paired = both mates of a read pair map to the same chromosome, oriented towards one another, with a sensible insert size. Note, the negative control is included in this plot" ,
+        "upper_lim_linestyle":"",
+        "lower_lim_linestyle":"",
+        "lower_lim_linecolour":"",
+        "upper_lim_linecolour":"",
+	    "upper_lim": False,
+	    "upper_lim_label":False,
+        "lower_lim": False,
+	    "lower_lim_label":False,
+        "WES":False,
+	    "PANEL":False,
+	    "SWIFT":True,
+        "NEXTSEQ_LUIGI": False,
+        "NEXTSEQ_MARIO": False,
+        "MISEQ_ONC": False,
+        "MISEQ_DNA": False,
+        "NOVASEQ_PIKACHU": False
+    },
+    "pct_off_amplicon":{
+        "function":"parse_multiqc_output",
+        "plot_type":"box_plot",
+        "input_file":"multiqc_picard_pcrmetrics.txt",
+        "name_column":0,
+        "column_of_interest":10,
+        "conversion_to_percent":False,
+        "header_present":True,
+        "plot_title":"Percentage of Off Amplicon Bases",
+        "plot_text":"The percentage of aligned passing filter (PF) bases that mapped neither on or near an amplicon. This is a measure of primer specificity. Note, the negative control is included in this plot" ,
+        "upper_lim_linestyle":"",
+        "lower_lim_linestyle":"",
+        "lower_lim_linecolour":"",
+        "upper_lim_linecolour":"",
+	    "upper_lim": False,
+	    "upper_lim_label":False,
+        "lower_lim": False,
+	    "lower_lim_label":False,
+        "WES":False,
+	    "PANEL":False,
+	    "SWIFT":True,
+        "NEXTSEQ_LUIGI": False,
+        "NEXTSEQ_MARIO": False,
+        "MISEQ_ONC": False,
+        "MISEQ_DNA": False,
+        "NOVASEQ_PIKACHU": False
     }
 }
 
