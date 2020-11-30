@@ -2,6 +2,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
+import subprocess
 import os
 import datetime
 import pdfkit
@@ -29,7 +30,7 @@ def get_arguments():
 class trend_analysis:
     """
     """
-    def __init__(self, input_folder, output_folder, runtype, images_folder, archive_folder):
+    def __init__(self, input_folder, output_folder, runtype, images_folder, template_dir, archive_folder, app_version):
         self.timestamp = datetime.datetime.now().strftime('%d-%B-%Y %H:%M')
         self.filename_timestamp = datetime.datetime.now().strftime('%y%m%d_%H_%M')
         self.dictionary = OrderedDict({})
@@ -38,7 +39,9 @@ class trend_analysis:
         self.input_folder = input_folder
         self.output_folder = output_folder
         self.images_folder = images_folder
+        self.template_dir = template_dir
         self.archive_folder = archive_folder
+        self.app_version = app_version
 
     def call_tools(self):
         """
@@ -120,11 +123,8 @@ class trend_analysis:
         This function takes all the plot specific html segments and inserts these into the report template
         The report html template is loaded, the placeholders filled and this report is saved to the provided location
         """
-
         # specify the folder containing the html templates
-	    # this should be a subfolder of this repository with the name defined in config file.
-        html_template_dir = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__),config.template_dir)))
-
+        html_template_dir = Environment(loader=FileSystemLoader(self.template_dir))
         # specify which html template to use, and load this as a python object, template
         html_template = html_template_dir.get_template("internal_report_template.html")
 
@@ -134,7 +134,8 @@ class trend_analysis:
         place_holder_values = {
             "reports":config.body_template.format("\n".join(self.plots)),
             "logo_path":config.logopath,
-            "timestamp":self.timestamp
+            "timestamp":self.timestamp,
+            "app_version":self.app_version
             }
 
         html_path = os.path.join(self.output_folder,self.runtype+"_trend_report.html")
@@ -397,6 +398,18 @@ def return_columns(file_path,tool):
     # return list
     return to_return
 
+def git_tag():
+    """
+    rather than hard code the script release, read it directly from the repository
+    """
+    #  set the command which prints the git tags for the folder containing the script that is being executed. The tag looks like "v22-3-gccfd" so needs to be parsed. use awk to create an array "a", splitting on "-". The print the first element of the array
+    cmd = "git -C " + os.path.dirname(os.path.realpath(__file__)) + " describe --tags | awk '{split($0,a,\"-\"); print a[1]}'"
+    #  use subprocess to execute command
+    proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+    out, err = proc.communicate()
+    #  return standard out, removing any new line characters
+    return out.rstrip()
+
 def check_for_update():
     """
     Look to see if the index.html, which contains the links to multiqc reports has been modified in the last hour
@@ -415,12 +428,14 @@ def check_for_update():
 
 def main():
     args = get_arguments()
+    app_version = git_tag()
     # If the user runs the script during development
     if args.dev:
         for runtype in config.run_types:
             t = trend_analysis(input_folder=config.dev_input_folder, output_folder=config.dev_output_folder,
                                images_folder=config.dev_images_folder, runtype=runtype,
-                               archive_folder=config.dev_archive_folder)
+                               template_dir=config.dev_template_dir,
+                               archive_folder=config.dev_archive_folder, app_version = app_version)
             t.call_tools()
         copyfile(src=config.index_file,dst=config.dev_index_file)
 
@@ -430,7 +445,8 @@ def main():
             for runtype in config.run_types:
                 t=trend_analysis(input_folder=config.input_folder,output_folder=config.output_folder,
                                  images_folder=config.images_folder, runtype=runtype,
-                                 archive_folder=config.archive_folder)
+                                 template_dir = config.template_dir,
+                                 archive_folder=config.archive_folder, app_version = app_version)
                 t.call_tools()
 
 

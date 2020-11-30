@@ -8,7 +8,7 @@ input_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data"
 output_folder = "/var/www/html/mokaguys/multiqc/trend_analysis"
 images_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/images/"
 logopath = "images/viapathlogo.png"
-template_dir = 'html_template'
+template_dir = "/usr/local/src/mokaguys/development_area/trend_analysis/html_template"
 archive_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/archive"
 
 # development folder paths
@@ -16,6 +16,7 @@ dev_input_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/test_multi
 dev_output_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis"
 dev_images_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/images/"
 dev_index_file = "/var/www/html/mokaguys/dev/multiqc/index.html"
+dev_template_dir = "/usr/local/src/mokaguys/development_area/trend_analysis/dev_html_template"
 dev_archive_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive"
 
 # pdf creation
