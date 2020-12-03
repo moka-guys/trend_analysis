@@ -16,19 +16,54 @@ from shutil import copyfile
 
 def get_arguments():
     """
-    Uses argparse module to define and handle command line input arguments and help menu
+    Uses argparse module to create an argument parser and define and handle command line arguments
+
+        :return:
+            (Namespace object) :  parsed command line attributes
     """
     parser = argparse.ArgumentParser()
-    # Define the arguments that will be taken.
+    # defines command line arguments
     parser.add_argument(
         '-d', '--dev', action='store_true', help="uses development output file locations (ensures live "
         "app isn't refreshed during development and testing)",
     )
-    # Return the arguments
     return parser.parse_args()
 
 class trend_analysis:
     """
+    A class to create a trend report.
+
+    Attributes
+    __________
+    timestamp : str
+        current time (time of report generation) added to report
+    filename_timestamp : str
+        current time (time of report generation) added to report filename
+    dictionary : OrderedDict
+        populated with qc data from multiqc outputs required for each plot
+    plots : list
+        list of plots to be included in the trend report
+    runtype : str
+        a html trend report is generated for each runtype specified in config.py
+    input_folder : str
+        path to multiqc data per run
+    output_folder : str
+        path to save location for html trend reports and archive_index.html
+    template_dir : str
+        path to html templates
+    archive_folder : str
+        path to archived html reports
+    app_version : str
+        version of trend_analysis app used to create report
+
+    Methods
+    _______
+    call_tools(self):
+        For each tool in the config file, determines the modules used to parse the data.
+        Returns a dictionary for each tool which is used to create the plot for that tool.
+        Creates a html module for that tool.
+     create_tool_plot(self, tool):
+        Builds tool-specific html modules using a template within the config file.
     """
     def __init__(self, input_folder, output_folder, runtype, images_folder, template_dir, archive_folder, app_version):
         self.timestamp = datetime.datetime.now().strftime('%d-%B-%Y %H:%M')
@@ -45,14 +80,15 @@ class trend_analysis:
 
     def call_tools(self):
         """
-        Loop through the list of plots in the sorted list (config.plot_order)
-        For each module, it determine which module should be used to parse the data (defined by the function property of the tool config)
-        For each tool a dictionary is returned, containing the run numbers as the keys, and a list of values as the value
-        A plot is created for the tool (box_plot or table functions), using the plot type defined in the tool config and a html module created for the tool (self.create_tool_plot)
+        Loop through the list of tools in config.plot_order
+        For each tool, determine which module should be used to parse the data (defined by the function property of the tool config)
+        For each tool return a dictionary containing run numbers as keys, and a list of values as the value
+        Create a plot using the plot type defined in the tool config (box_plot or table functions)
+        Create a html module for the tool (self.create_tool_plot)
         """
         # for each tool in the prescribed order
         for tool in config.plot_order:
-            # check the plot is applicable to this run type, eg coverage at 20X and contamination plots are only applicable to WES
+            # check the plot is applicable to run type (specified in tool settings for each tool)
             if config.tool_settings[tool][self.runtype]:
                 print tool, self.runtype
                 # parse the list of available modules in this script
@@ -60,21 +96,19 @@ class trend_analysis:
                     # if the module is described in the tool config (function) call that object
                     if config.tool_settings[tool]["function"] in name:
                         # eg if config.tool_settings[tool]["function"] == parse_multiqc_output
-                        # that function is called, supplying tool and self.input_folder variables as inputs
-                        # a dictionary is returned, with the run as a key, and a list of values as the value
+                        # parse_multiqc_output function is called and dictionary returned
                         self.dictionary[tool] = obj(tool,self.input_folder, self.runtype)
                         # if the dictionary is populated (might not find the expected inputs)
                         if self.dictionary[tool]:
-                            # Next determine what plot type is required for this tool (as defined in config)
+                            # determine plot type reuired for tool as defined in config
                             if config.tool_settings[tool]["plot_type"]=="box_plot":
-                                # box_plot function returns the location of a plot it has saved
+                                # box_plot function returns path to saved plot
                                 self.dictionary[tool]["image_location"] = box_plot(tool, self.dictionary,
                                                                                        self.runtype, self.images_folder)
                             elif config.tool_settings[tool]["plot_type"]=="table":
                                 # table function returns a html string
                                 self.dictionary[tool]["table_text"] = table(tool,self.dictionary)
-                            # call function which creates the html module for this tool
-                            # append output to self.plots
+                            # call function which creates the html module for this tool and append output to self.plots
                             self.plots.append(self.create_tool_plot(tool))
         # after looping through all tools generate report
         self.generate_report()
@@ -83,13 +117,13 @@ class trend_analysis:
 
     def create_tool_plot(self, tool):
         """
-        This function build a tool specific html module.
-        This html is build using a template within the config file
-        Plot specific settings are defined and passed to populate_html_template() which populates the placeholders within template
-        Input:
-            Tool that is being plotted. allows tool config and data to be accessed
-        Returns:
-            A populated html template
+        Builds a tool-specific html module using a template within the config file
+        Defines plot specific settings and passes to populate_html_template() which populates placeholders within template
+
+            Parameters:
+                tool (str) : Tool that is being plotted. Allows tool config and data to be accessed
+            :return:
+                (html string) : Populated html template
         """
         # define the template to be used and the content of the plot (eg a html string, or a path to a image)
         if config.tool_settings[tool]["plot_type"] == "table":
@@ -97,7 +131,7 @@ class trend_analysis:
             plot_content = self.dictionary[tool]["table_text"]
         else:
             template = config.plot_template
-            plot_content =self.dictionary[tool]["image_location"]
+            plot_content = self.dictionary[tool]["image_location"]
         # pass plot title, plot text (both defined in tool config), plot content and the template to be used
         # the populated html template is returned, and this is returned from this function
         return self.populate_html_template(config.tool_settings[tool]["plot_title"],plot_content,config.tool_settings[tool]["plot_text"],template)
@@ -108,27 +142,28 @@ class trend_analysis:
     def populate_html_template(plot_title, plot_image, plot_text, template):
         """
         Populates a html template for a single plot, which can then be added to the larger template
-        Inputs:
-            plot_title (string to put at top of section)
-            plot_image (path to image saved earlier)
-            plot_text (any plot specific text to go underneath the image)
-            template (the template from the config file)
-        Returns:
-            populated template (html string) with placeholders complete
+
+            Parameters:
+                plot_title (str) : String to put at top of section
+                plot_image (str) : Path to image saved earlier
+                plot_text (str) : Any plot specific text to go underneath the image
+                template (str) : Template from the config file
+            :return:
+                (html string) : Populated template with placeholders complete
         """
         return template.format(plot_title, plot_text, plot_image)
 
     def generate_report(self):
         """
-        This function takes all the plot specific html segments and inserts these into the report template
-        The report html template is loaded, the placeholders filled and this report is saved to the provided location
+        Inserts all plot specific html segments into the report template
+        Loads report html template, fills placeholders, and saves report to the provided location using pdfkit package and wkhtmltopdf software
         """
-        # specify the folder containing the html templates
+        # specify folder containing the html templates
         html_template_dir = Environment(loader=FileSystemLoader(self.template_dir))
         # specify which html template to use, and load this as a python object, template
         html_template = html_template_dir.get_template("internal_report_template.html")
 
-        # the template has a number of placeholders.
+        # the template has a number of placeholders
         # When the report is rendered these are populated from this dictionary
         # self.plots is a list of html sections created for each plot. join these into a single string, joint with a newline
         place_holder_values = {
@@ -144,16 +179,20 @@ class trend_analysis:
             # write the template, rendering with the placeholders using the dictionary
             html_file.write(html_template.render(place_holder_values))
 
-        # the html file should be saved as a pdf (with all images) for long terms records. This uses the pdfkit package and wkhtmltopdf software 
-        # # specify pdfkit options to turn off standard out and also allow access to the images
-        # pdfkit needs the [ath tp wkhtmltopdf ninary file - defined in config]
+        # saves html file as pdf (with all images) for long term records
+        # specify pdfkit options to turn off standard out and also allow access to the images
+        # pdfkit needs the path tp wkhtmltopdf binary file - defined in config
         pdfkit_options = {'enable-local-file-access': None, "quiet": ''}
         pdfkit_config = pdfkit.configuration(wkhtmltopdf=config.wkhtmltopdf_path)
         # using the pdfkit package, specify the html file to be converted, name the pdf kit using the timestamp and run type
         pdfkit.from_file(html_path, os.path.join(self.archive_folder, str(self.filename_timestamp) + "_" + self.runtype + "_trend_report.pdf"), configuration=pdfkit_config, options=pdfkit_options)
 
     def generate_archive_html(self):
-        html_path = os.path.join(self.output_folder,"archive.html")
+        """
+        Adds the created trend report as a link to the archive_index.html
+        This means the archived version is still accessible after the live report has been overwritten with more recent runs.
+        """
+        html_path = os.path.join(self.output_folder,"archive_index.html")
         archive_directory = os.listdir(self.archive_folder)
         with open(html_path, "wb") as html_file:
             html_file.write('<html><head align="center">ARCHIVED TREND ANALYSIS REPORTS</head><body><ul>')
@@ -162,16 +201,14 @@ class trend_analysis:
 
 def table(tool, dictionary):
     """
-    This function builds a html table.
-    Currently, this is designed to describe the run names included in this trend analysis,
-    and to build upon the template in the config file.
-    A table row is added for each run in the dictionary
-    The dictionary key go into the first column and it's value into the second column
-    Inputs:
-        dictionary - dictionary of qc data for all tools
-        tool name - allows access to tool specific config settings and of dictionary
-    Returns:
-        String containing the table body html
+    Builds a html table using the template in the config file and the run names included in this trend analysis.
+    A table row is added for each run in the dictionary, with dictionary key in column 1 and its value in column 2.
+
+        Inputs:
+            dictionary (OrderedDict) : dictionary of qc data for all tools
+            tool (str) : Tool name which allows access to tool-specific config settings and of dictionary
+        :return:
+            rows_html (str) : contains the table body html
     """
     # start string
     rows_html=""
@@ -183,22 +220,23 @@ def table(tool, dictionary):
         rows_html+=html_table_row.format(i, dictionary[tool][i])
     # close table body tag
     rows_html+="</tbody>"
-    # return string
     return rows_html
 
 def box_plot(tool, dictionary, runtype, images_folder):
     """
-    This function builds a box plot and saves the image to a location defined in the config
+    Builds a box plot and saves the image to a location defined in the config
     The x axis is labelled with the number of runs included, from oldest to newest
     Where specified in config, horizontal lines are added to define cutoffs
 
-    Inputs:
-        dictionary - dictionary of qc data for all tools
-        tool name - allows access to tool specific config settings and of dictionary
-    Returns:
-        path to the plot specific image saved
+        Inputs:
+            dictionary (OrderedDict) : dictionary of qc data for all tools
+            tool (str) : allows access to tool specific config settings and of dictionary
+            runtype (str) : required as provides one of the elements of the saved plot image name
+            images_folder (str) : plot save location
+        :return:
+            html_image_path (str) : path to the saved plot specific image
     """
-    # close the any previous plots to prevent previous data from being included on same axis
+    # close any previous plots to prevent previous data from being included on same axis
     plt.close()
     # build list of x axis labels
     # We don't know how many runs may be included so label the first as oldest and last as newest (use len of dictionary.keys())
@@ -229,7 +267,7 @@ def box_plot(tool, dictionary, runtype, images_folder):
     plt.ticklabel_format(axis='y', useOffset=False, style='plain')
     # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
     image_path=os.path.join(images_folder,runtype + "_" + tool+".png")
-    html_image_path = "images/"+runtype + "_" + tool+".png"
+    html_image_path = "images/" + runtype + "_" + tool+".png"
     plt.savefig(image_path, bbox_inches="tight",dpi=200)
     # return the path to the save image
     return html_image_path
@@ -240,11 +278,12 @@ def sorted_runs(run_list, input_folder, runtype):
     The runs included in the analysis are saved in run specific folders, named with the runfolder name (002_YYMMDD_[*WES*,*NGS*,*ONC*])
     Extract the date of the run from the folder name and create an ordered list
 
-    Input:
-        List of run folders to be included in trend analysis
-        Runtype - one of WES, PANEL or SWIFT to filter the available runs
-    Returns:
-        list of most recent runfolder names, in date ascending order (oldest first)
+        Input:
+            run_list (list) : List of run folders to be included in trend analysis
+            input_folder (str) : path to multiqc data per run
+            runtype (str) : runtypes specified in config, to filter available runs
+        :return:
+            (list) : list of most recent runfolder names, in date ascending order (oldest first)
     """
     dates = {}
     # for run in folder
@@ -289,20 +328,20 @@ def sorted_runs(run_list, input_folder, runtype):
 def describe_run_names(tool, input_folder, runtype):
     """
     This function is specified as the function to be used in the tool config
-    It's specific use is to populate a table describing the runs included in this analysis
-    A sorted list of runs is determined
-    A dictionary is built, with the key as the order and value the run name
-    Inputs:
-        dictionary - dictionary of qc data for all tools
-        tool name - allows access to tool specific config settings and of dictionary
-    Returns:
-        dictionary with key as the order, and value the run name
+    Populates a table describing the runs included in this analysis
+    Creates sorted list of runs, and builds a dictionary with key as order and value as run name
+
+        Inputs:
+            tool (str) : allows access to tool specific config settings and of dictionary
+            dictionary (OrderedDict) : dictionary of qc data for all tools
+            runtype (str) : runtypes specified in config, to filter available runs
+        :return:
+            run_name_dictionary (dict) : dictionary with key as the order, and value the run name
     """
     # get date sorted list of runfolders
     sorted_run_list = sorted_runs(os.listdir(input_folder), input_folder, runtype)
     run_name_dictionary = {}
-    # build dictionary with key as the order and value as run name.
-    # Add oldest and newest to first and last
+    # build dictionary, add oldest and newest to first and last
     for i in range(1,len(sorted_run_list)+1):
         if i == 1:
             run_name_dictionary[str(i)+" oldest"] = sorted_run_list[i-1]
@@ -316,17 +355,18 @@ def describe_run_names(tool, input_folder, runtype):
 def parse_multiqc_output(tool, input_folder, runtype):
     """
     This function is specified as the function to be used in the tool config
-    It's specific use is to read a tool specific file output by multiqc
-    these files tend to have a header line and then one row per sample
-    Using the tool specific settings in the config file:
-    for each runfolder the find function is used to find the file
-    the return columns function is used to parse the file, returning the relevant data
-    A dictionary is built with the run name as the key and value is a list of data points
-    Inputs:
-        dictionary - dictionary of qc data for all tools
-        tool name - allows access to tool specific config settings and of dictionary
-    Returns:
-        dictionary with run name as the key and value is a list of data points
+    Reads a tool specific output file by multiqc (tend to have a header line then one row per sample)
+    Using the tool specific settings in the config file
+    For each runfolder the find function finds the file
+    Return columns function parses the file, returning relevant data
+    Dictionary is built with run name as key and value as a list of data points.
+
+        Inputs:
+            tool (str) : allows access to tool specific config settings and of dictionary
+            dictionary (OrderedDict) : dictionary of qc data for all tools
+            runtype (str) : runtypes specified in config, to filter available runs
+        :return:
+            tool_dict (OrderedDict) : dictionary with run name as the key and value is a list of data points
     """
     # get the name of the raw data file
     input_file_name = config.tool_settings[tool]["input_file"]
@@ -345,12 +385,12 @@ def find(name, path):
     """
     Use os.walk to recursively search through all files in a folder
     Return the path to identified file
-    Input:
-        name - filename from config file
-        filename - full file name obtained using name
-        path - path to the file containing all QC files for that run
-    Returns:
-        Path to file of interest
+
+        Input:
+            name (str) : filename from config file
+            path (str) : path to the file containing all QC files for that run
+        :return:
+            (str) : path to file of interest. Only returned if the file exists for that run.
     """
     for root, dirs, files in os.walk(path):
         for filename in files:
@@ -365,11 +405,12 @@ def return_columns(file_path,tool):
     If the tool is the cluster density plot, skips the first seven rows as these are headers.
     For all other plots, skips the first row as this is the header.
     Create and return a list of all measurements
-    Input:
-        filepath - file to parse
-        tool name - tool name - allows access to tool specific config settings
-    Returns:
-        a list of measurements from the column of interest,
+
+        Input:
+            file_path (str) : file to parse
+            tool (str) : tool name - allows access to tool specific config settings
+        :return:
+            to_return (list) : a list of measurements from the column of interest
     """
     # list for sample specific measurements
     to_return=[]
@@ -377,6 +418,7 @@ def return_columns(file_path,tool):
     with open(file_path,'r') as input_file:
         # enumerate the list of lines as loop through it so we can skip the header if needed
         for linecount, line in enumerate(input_file):
+            # if the tool is the cluster density plot, skip the first 7 rows as these are headers
             if config.tool_settings[tool]["input_file"] == "illumina_lane_metrics":
                 if config.tool_settings[tool]["header_present"] and 0<=linecount<=6:
                     pass
@@ -385,6 +427,7 @@ def return_columns(file_path,tool):
                     if not line.isspace():
                         measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])/1000
                     to_return.append(measurement)
+            # for all other tool types
             else:
                 if config.tool_settings[tool]["header_present"] and linecount == 0:
                     pass
@@ -400,9 +443,13 @@ def return_columns(file_path,tool):
 
 def git_tag():
     """
-    rather than hard code the script release, read it directly from the repository
+    Reads the script release version number directly from the repository
+        :return:
+            (str) : returns version number of current script release
     """
-    #  set the command which prints the git tags for the folder containing the script that is being executed. The tag looks like "v22-3-gccfd" so needs to be parsed. use awk to create an array "a", splitting on "-". The print the first element of the array
+    #  set the command which prints the git tags for the folder containing the script that is being executed.
+    #  The tag looks like "v22-3-gccfd" so needs to be parsed.
+    #  Use awk to create an array "a", splitting on "-". The print the first element of the array
     cmd = "git -C " + os.path.dirname(os.path.realpath(__file__)) + " describe --tags | awk '{split($0,a,\"-\"); print a[1]}'"
     #  use subprocess to execute command
     proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
@@ -413,6 +460,9 @@ def git_tag():
 def check_for_update():
     """
     Look to see if the index.html, which contains the links to multiqc reports has been modified in the last hour
+    If it has, return true, if not return false.
+        :return:
+            (bool) : returns a Boolean value true or false
     """
     # see when the index.html file was last modified
     index_last_modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(config.index_file))
@@ -421,8 +471,6 @@ def check_for_update():
         return True
     else:
         #print "index not modified since script run last"
-	# whilst debugging
-	#return True
 	return False
 
 

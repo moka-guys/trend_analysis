@@ -1,4 +1,4 @@
-# how frequenctly (in hours) the script will run (via cron) - this value defines the window which the index.html file date modified must fall within to trigger a new trend analysis
+# how frequently (in hours) the script will run (via cron) - this value defines the window which the index.html file date modified must fall within to trigger a new trend analysis
 run_frequency = 2
 number_of_runs_to_include = 5
 
@@ -22,10 +22,10 @@ dev_archive_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive"
 # pdf creation
 wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
 
-run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC", "MISEQ_DNA", "NOVASEQ_PIKACHU"]
 #run_types = panels and individual sequencers
+run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC", "MISEQ_DNA", "NOVASEQ_PIKACHU"]
 
-# This defines the order plots appear in the report (top to bottom) - Only plots in this list will be included on the report
+# Define order of plots in report (top to bottom) - only plots in this list are included
 plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","cluster_density_MiSeq","cluster_density_NextSeq","contamination","properly_paired","pct_off_amplicon"]
 
 # tool specific settings
