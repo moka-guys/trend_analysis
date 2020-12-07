@@ -26,7 +26,7 @@ wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
 run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC", "MISEQ_DNA", "NOVASEQ_PIKACHU"]
 
 # Define order of plots in report (top to bottom) - only plots in this list are included
-plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","cluster_density_MiSeq","cluster_density_NextSeq","contamination","properly_paired","pct_off_amplicon"]
+plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","cluster_density_MiSeq","cluster_density_NextSeq","contamination","properly_paired","pct_off_amplicon","fastq_total_sequences"]
 
 # tool specific settings
 tool_settings = {
@@ -317,6 +317,33 @@ tool_settings = {
         "WES":False,
 	    "PANEL":False,
 	    "SWIFT":True,
+        "NEXTSEQ_LUIGI": False,
+        "NEXTSEQ_MARIO": False,
+        "MISEQ_ONC": False,
+        "MISEQ_DNA": False,
+        "NOVASEQ_PIKACHU": False
+    },
+    "fastq_total_sequences":{
+        "function":"parse_multiqc_output",
+        "plot_type":"box_plot",
+        "input_file":"multiqc_fastqc.txt",
+        "name_column":1,
+        "column_of_interest":13,
+        "header_present":True,
+	    "conversion_to_percent":False,
+        "plot_title":"Fastq Total Sequences",
+        "plot_text":"Boxplot showing the total number of sequences",
+        "upper_lim_linestyle":"",
+        "lower_lim_linestyle":"",
+        "lower_lim_linecolour":"",
+        "upper_lim_linecolour":"",
+        "upper_lim":False,
+        "upper_lim_label":False,
+        "lower_lim":False,
+        "lower_lim_label":False,
+        "WES":True,
+        "PANEL":True,
+        "SWIFT":False,
         "NEXTSEQ_LUIGI": False,
         "NEXTSEQ_MARIO": False,
         "MISEQ_ONC": False,
