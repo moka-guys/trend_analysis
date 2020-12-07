@@ -426,18 +426,24 @@ def return_columns(file_path,tool):
                     # ignore blank lines, split the line, pull out column of interest, divide by 1000, add to list
                     if not line.isspace():
                         measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])/1000
-                    to_return.append(measurement)
+                        to_return.append(measurement)
             # for all other tool types
             else:
+                # skip header row
                 if config.tool_settings[tool]["header_present"] and linecount == 0:
                     pass
                 else:
+                    # exclude negative control stats from the "properly_paired" and "pct_off_amplicon" plots
+                    if (config.tool_settings[tool]["input_file"] in ["multiqc_picard_pcrmetrics.txt",
+                                                              "multiqc_samtools_flagstat.txt"]) and ("NTCcon" in line):
+                        pass
                     # for all other rows that aren't header rows, split line, pull out column of interest, add to list
-                    if config.tool_settings[tool]["conversion_to_percent"]:
+                    elif config.tool_settings[tool]["conversion_to_percent"]:
                         measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])*100
+                        to_return.append(measurement)
                     else:
                         measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])
-                    to_return.append(measurement)
+                        to_return.append(measurement)
     # return list
     return to_return
 
