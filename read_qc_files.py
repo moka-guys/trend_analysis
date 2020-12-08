@@ -299,12 +299,12 @@ def stacked_bar(tool, dictionary, runtype, images_folder):
     # dictionary[tool] is a dictionary, with the run name as key, and a list of values as the value
     # convert dictionary to a pandas dataframe, count true and false values for each run
     # transform dataframe so row index is run names
-    print(dictionary[tool].values)
+    #print(dictionary[tool].values)
     df = pd.DataFrame(dictionary[tool]).apply(pd.value_counts)
-    print(df)
+    #print(df)
     # replace run names with x axis labels
     df.columns = xlabels
-    print(df)
+    #print(df)
     # Add the data to the plot as bar chart
     df.T.plot.bar(rot=0)
     # add the x ticks
@@ -444,6 +444,19 @@ def find(name, path):
     print "no output named {} for run {}".format(name, path)
     return False
 
+def return_column_index(input_file, tool):
+    """
+    Selects the column of interest based on the column heading provided in the config file.
+    :param input_file:
+    :param tool:
+    :return:
+    """
+    # create a list of headers split on tab
+    header_line = [input_file.readline().strip('\n').split("\t")]
+    # get index of column of interest
+    column_index = header_line[0].index(config.tool_settings[tool]["column_of_interest"])
+    return column_index
+
 def return_columns(file_path,tool):
     """
     For a given file, open and for each line (excluding header if required) extract the column of interest as a float.
@@ -461,6 +474,8 @@ def return_columns(file_path,tool):
     to_return=[]
     # open file
     with open(file_path,'r') as input_file:
+        # select column index of interest
+        column_index = return_column_index(input_file, tool)
         # enumerate the list of lines as loop through it so we can skip the header if needed
         for linecount, line in enumerate(input_file):
             # if the tool is the cluster density plot, skip the first 7 rows as these are headers
@@ -470,7 +485,7 @@ def return_columns(file_path,tool):
                 else:
                     # ignore blank lines, split the line, pull out column of interest, divide by 1000, add to list
                     if not line.isspace():
-                        measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])/1000
+                        measurement = float(line.split("\t")[column_index])/1000
                         to_return.append(measurement)
             # for all other tool types
             else:
@@ -484,16 +499,15 @@ def return_columns(file_path,tool):
                         pass
                     # for all other rows that aren't header rows, split line, pull out column of interest, add to list
                     elif config.tool_settings[tool]["conversion_to_percent"]:
-                        measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])*100
+                        measurement = float(line.split("\t")[column_index])*100
                         to_return.append(measurement)
                     elif config.tool_settings[tool]["plot_type"] == "stacked_bar":
-                        measurement = line.split("\t")[config.tool_settings[tool]["column_of_interest"]]
+                        measurement = line.split("\t")[column_index]
                         # do not include blank space
-                        print(measurement)
                         if measurement is not "":
                             to_return.append(measurement)
                     else:
-                        measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])
+                        measurement = float(line.split("\t")[column_index])
                         to_return.append(measurement)
     # return list
     return to_return
