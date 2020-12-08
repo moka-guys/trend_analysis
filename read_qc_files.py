@@ -299,16 +299,14 @@ def stacked_bar(tool, dictionary, runtype, images_folder):
     # dictionary[tool] is a dictionary, with the run name as key, and a list of values as the value
     # convert dictionary to a pandas dataframe, count true and false values for each run
     # transform dataframe so row index is run names
-    #print(dictionary[tool].values)
     df = pd.DataFrame(dictionary[tool]).apply(pd.value_counts)
-    #print(df)
     # replace run names with x axis labels
     df.columns = xlabels
-    #print(df)
     # Add the data to the plot as bar chart
     df.T.plot.bar(rot=0)
     # add the x ticks
     plt.xticks()
+    plt.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
     plt.ticklabel_format(axis='y', useOffset=False, style='plain')
     # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
     image_path = os.path.join(images_folder, runtype + "_" + tool + ".png")
