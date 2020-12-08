@@ -2,6 +2,23 @@
 run_frequency = 2
 number_of_runs_to_include = 5
 
+# Production email server settings
+mokaguys_email = "gst-tr.mokaguys@nhs.net"
+wes_email = "gst-tr.wesviapath@nhs.net"
+oncology_ops_email = "m.neat@nhs.net"
+host = "email-smtp.eu-west-1.amazonaws.com"
+port = 587
+me = "moka.alerts@gstt.nhs.uk"
+smtp_do_tls = True
+WES_email_message = "New WES trend analysis is ready. The following new runs have been added:"
+custom_panels_email_message = "New Custom Panels trend analysis is ready. The following new runs have been added:"
+swift_email_message = "New SWIFT trend analysis is ready. The following new runs have been added:"
+
+# Development email server settings
+mokaguys_email = ""
+wes_email = ""
+oncology_ops_email = ""
+
 # production folder paths
 index_file = "/var/www/html/mokaguys/multiqc/index.html"
 input_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data"

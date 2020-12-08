@@ -15,6 +15,7 @@ import argparse
 from shutil import copyfile
 from email.message import Message
 import pandas as pd
+import time
 
 def get_arguments():
     """
@@ -88,6 +89,10 @@ class trend_analysis:
         Create a plot using the plot type defined in the tool config (box_plot or table functions)
         Create a html module for the tool (self.create_tool_plot)
         """
+        # create runlist for all runs of the runtype
+        run_list = sorted_runs(os.listdir(self.input_folder), self.input_folder, self.runtype)
+        # check whether any of these runs are new and not yet included in the trend reports
+        new_runs = check_emails_sent(self.input_folder, run_list)
         # for each tool in the prescribed order
         for tool in config.plot_order:
             # check the plot is applicable to run type (specified in tool settings for each tool)
@@ -121,16 +126,18 @@ class trend_analysis:
         self.generate_report()
         # generate archive html
         self.generate_archive_html()
+        if new_runs:
+            # send new trend report alert email to relevant team
+            send_email(new_runs, self.runtype)
+            # create logfile in runfolder denoting mail has been sent
+            create_logfile(self.input_folder, new_runs, self.timestamp)
 
     def create_tool_plot(self, tool):
         """
         Builds a tool-specific html module using a template within the config file
         Defines plot specific settings and passes to populate_html_template() which populates placeholders within template
-
-            Parameters:
-                tool (str) : Tool that is being plotted. Allows tool config and data to be accessed
-            :return:
-                (html string) : Populated html template
+            :param tool: (str) Tool that is being plotted. Allows tool config and data to be accessed
+            :return: (html string) Populated html template
         """
         # define the template to be used and the content of the plot (eg a html string, or a path to a image)
         if config.tool_settings[tool]["plot_type"] == "table":
@@ -152,14 +159,11 @@ class trend_analysis:
     def populate_html_template(plot_title, plot_image, plot_text, template):
         """
         Populates a html template for a single plot, which can then be added to the larger template
-
-            Parameters:
-                plot_title (str) : String to put at top of section
-                plot_image (str) : Path to image saved earlier
-                plot_text (str) : Any plot specific text to go underneath the image
-                template (str) : Template from the config file
-            :return:
-                (html string) : Populated template with placeholders complete
+            :param plot_title: (str) String to put at top of section
+            :param plot_image: (str) Path to image saved earlier
+            :param plot_text: (str) Any plot specific text to go underneath the image
+            :param template: (str) Template from the config file
+            :return: (html string) Populated template with placeholders complete
         """
         return template.format(plot_title, plot_text, plot_image)
 
@@ -213,12 +217,9 @@ def table(tool, dictionary):
     """
     Builds a html table using the template in the config file and the run names included in this trend analysis.
     A table row is added for each run in the dictionary, with dictionary key in column 1 and its value in column 2.
-
-        Inputs:
-            dictionary (OrderedDict) : dictionary of qc data for all tools
-            tool (str) : Tool name which allows access to tool-specific config settings and of dictionary
-        :return:
-            rows_html (str) : contains the table body html
+        :param dictionary: (OrderedDict) dictionary of qc data for all tools
+        :param tool: (str) Tool name which allows access to tool-specific config settings and of dictionary
+        :return rows_html: (str) contains the table body html
     """
     # start string
     rows_html=""
@@ -237,14 +238,11 @@ def box_plot(tool, dictionary, runtype, images_folder):
     Builds a box plot and saves the image to a location defined in the config
     The x axis is labelled with the number of runs included, from oldest to newest
     Where specified in config, horizontal lines are added to define cutoffs
-
-        Inputs:
-            dictionary (OrderedDict) : dictionary of qc data for all tools
-            tool (str) : allows access to tool specific config settings and of dictionary
-            runtype (str) : required as provides one of the elements of the saved plot image name
-            images_folder (str) : plot save location
-        :return:
-            html_image_path (str) : path to the saved plot specific image
+        :param dictionary: (OrderedDict) dictionary of qc data for all tools
+        :param tool: (str) allows access to tool specific config settings and of dictionary
+        :param runtype: (str) required as provides one of the elements of the saved plot image name
+        :param images_folder: (str) plot save location
+        :return html_image_path: (str) path to the saved plot specific image
     """
     # close any previous plots to prevent previous data from being included on same axis
     plt.close()
@@ -284,7 +282,10 @@ def box_plot(tool, dictionary, runtype, images_folder):
 
 def stacked_bar(tool, dictionary, runtype, images_folder):
     """
-
+    :param tool:
+    :param dictionary:
+    :param runtype:
+    :param images_folder:
     :return:
     """
     # close any previous plots to prevent previous data from being included on same axis
@@ -323,13 +324,10 @@ def sorted_runs(run_list, input_folder, runtype):
     The runs should be plotted in date order, oldest to newest.
     The runs included in the analysis are saved in run specific folders, named with the runfolder name (002_YYMMDD_[*WES*,*NGS*,*ONC*])
     Extract the date of the run from the folder name and create an ordered list
-
-        Input:
-            run_list (list) : List of run folders to be included in trend analysis
-            input_folder (str) : path to multiqc data per run
-            runtype (str) : runtypes specified in config, to filter available runs
-        :return:
-            (list) : list of most recent runfolder names, in date ascending order (oldest first)
+        :param run_list: (list) List of run folders to be included in trend analysis
+        :param input_folder: (str) path to multiqc data per run
+        :param runtype: (str) runtypes specified in config, to filter available runs
+        :return (list) list of most recent runfolder names, in date ascending order (oldest first)
     """
     dates = {}
     # for run in folder
@@ -376,13 +374,10 @@ def describe_run_names(tool, input_folder, runtype):
     This function is specified as the function to be used in the tool config
     Populates a table describing the runs included in this analysis
     Creates sorted list of runs, and builds a dictionary with key as order and value as run name
-
-        Inputs:
-            tool (str) : allows access to tool specific config settings and of dictionary
-            dictionary (OrderedDict) : dictionary of qc data for all tools
-            runtype (str) : runtypes specified in config, to filter available runs
-        :return:
-            run_name_dictionary (dict) : dictionary with key as the order, and value the run name
+        :param tool: (str) allows access to tool specific config settings and of dictionary
+        :param dictionary: (OrderedDict) dictionary of qc data for all tools
+        :param runtype: (str) runtypes specified in config, to filter available runs
+        :return run_name_dictionary: (dict) dictionary with key as the order, and value the run name
     """
     # get date sorted list of runfolders
     sorted_run_list = sorted_runs(os.listdir(input_folder), input_folder, runtype)
@@ -406,13 +401,10 @@ def parse_multiqc_output(tool, input_folder, runtype):
     For each runfolder the find function finds the file
     Return columns function parses the file, returning relevant data
     Dictionary is built with run name as key and value as a list of data points.
-
-        Inputs:
-            tool (str) : allows access to tool specific config settings and of dictionary
-            dictionary (OrderedDict) : dictionary of qc data for all tools
-            runtype (str) : runtypes specified in config, to filter available runs
-        :return:
-            tool_dict (OrderedDict) : dictionary with run name as the key and value is a list of data points
+        :param tool: (str) allows access to tool specific config settings and of dictionary
+        :param dictionary: (OrderedDict) dictionary of qc data for all tools
+        :param runtype: (str) runtypes specified in config, to filter available runs
+        :return tool_dict (OrderedDict) dictionary with run name as the key and value is a list of data points
     """
     # get the name of the raw data file
     input_file_name = config.tool_settings[tool]["input_file"]
@@ -431,12 +423,9 @@ def find(name, path):
     """
     Use os.walk to recursively search through all files in a folder
     Return the path to identified file
-
-        Input:
-            name (str) : filename from config file
-            path (str) : path to the file containing all QC files for that run
-        :return:
-            (str) : path to file of interest. Only returned if the file exists for that run.
+        :param name: (str) filename from config file
+        :param path: (str) path to the file containing all QC files for that run
+        :return: (str) path to file of interest. Only returned if the file exists for that run.
     """
     for root, dirs, files in os.walk(path):
         for filename in files:
@@ -464,12 +453,9 @@ def return_columns(file_path,tool):
     If the tool is the cluster density plot, skips the first seven rows as these are headers.
     For all other plots, skips the first row as this is the header.
     Create and return a list of all measurements
-
-        Input:
-            file_path (str) : file to parse
-            tool (str) : tool name - allows access to tool specific config settings
-        :return:
-            to_return (list) : a list of measurements from the column of interest
+        :param file_path: (str) file to parse
+        :param tool: (str) tool name - allows access to tool specific config settings
+        :return to_return: (list) a list of measurements from the column of interest
     """
     # list for sample specific measurements
     to_return=[]
@@ -516,8 +502,7 @@ def return_columns(file_path,tool):
 def git_tag():
     """
     Reads the script release version number directly from the repository
-        :return:
-            (str) : returns version number of current script release
+        :return: (str) returns version number of current script release
     """
     #  set the command which prints the git tags for the folder containing the script that is being executed.
     #  The tag looks like "v22-3-gccfd" so needs to be parsed.
@@ -529,20 +514,59 @@ def git_tag():
     #  return standard out, removing any new line characters
     return out.rstrip()
 
-def send_email():
+def send_email(new_runs, runtype):
     """
     Send email to notify users that a new trend report is complete.
-
     :return:
     """
+    # if runtype is WES
+        # send config.WES_email_message + new_runs to config.wes_email
+    # if runtype is "PANEL"
+        # send config.custom_panels_email_message + new_runs to config.oncology_ops_email ???
+    # if runtype is "SWIFT"
+        # send config.swift_email_message + new_runs to config.oncology_ops_email ???
+    print(os.path.join(runtype + ": Email notification sent."))
     return
+
+def create_logfile(input_folder, new_runs, timestamp):
+    """
+    Creates a logfile to record that the run has been analysed and a notification email sent to the relevant team.
+    :param input_folder (str) : path to multiqc data per run
+    :param new_runs:
+    :param timestamp:
+    :return:
+    """
+    #for run in new_runs:
+    for run in new_runs:
+        with open(os.path.join(input_folder + '/' + run + '/email_logfile'), "w") as email_logfile:
+            email_logfile.write(timestamp + ": Run has been analysed and notification email sent")
+    return
+
+def check_emails_sent(input_folder, run_list):
+    """
+    Checks the files within the runfolder for the presence of a
+    :param input_folder:
+    :return:
+    """
+    new_runs = []
+    for run in run_list:
+        # if logfile is present the run has previously been analysed
+        if "email_logfile" in os.listdir(os.path.join(input_folder + '/' + run)):
+            pass
+        else:
+            # run has not been analysed so append to new_runs list
+            new_runs.append(run)
+           # if "logfile" in filename:
+            #    with open(filename, "r"):
+             #       for line in filename.readlines():
+              #          if "Email sent" in line:
+    return new_runs
 
 def check_for_update():
     """
     Look to see if the index.html, which contains the links to multiqc reports has been modified in the last hour
     If it has, return true, if not return false.
-        :return:
-            (bool) : returns a Boolean value true or false
+        :return: (bool) returns a Boolean value true or false
     """
     # see when the index.html file was last modified
     index_last_modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(config.index_file))
@@ -552,7 +576,6 @@ def check_for_update():
     else:
         #print "index not modified since script run last"
 	return False
-
 
 def main():
     args = get_arguments()
