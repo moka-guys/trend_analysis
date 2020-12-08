@@ -138,7 +138,10 @@ class trend_analysis:
             plot_content = self.dictionary[tool]["table_text"]
         else:
             template = config.plot_template
-            plot_content = self.dictionary[tool]["image_location"]
+            # Deals with browser caching - appends a GET value (the UNIX timestamp) to the image URL
+            # This makes the browser think the image is dynamic, so reloads it every time the modification date changes
+            # Means the new image is used when a new plot is generated, rather than the cached one
+            plot_content = os.path.join(self.dictionary[tool]["image_location"] + '?" . filemtime(self.dictionary[tool]["image_location"]) . "')
         # pass plot title, plot text (both defined in tool config), plot content and the template to be used
         # the populated html template is returned, and this is returned from this function
         return self.populate_html_template(config.tool_settings[tool]["plot_title"],plot_content,config.tool_settings[tool]["plot_text"],template)
