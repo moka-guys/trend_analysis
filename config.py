@@ -26,7 +26,7 @@ wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
 run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC", "MISEQ_DNA", "NOVASEQ_PIKACHU"]
 
 # Define order of plots in report (top to bottom) - only plots in this list are included
-plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","cluster_density_MiSeq","cluster_density_NextSeq","contamination","properly_paired","pct_off_amplicon","fastq_total_sequences"]
+plot_order = ["run_names","q30_percent","picard_insertsize","on_target_vs_selected","target_bases_at_20X","target_bases_at_30X","cluster_density_MiSeq","cluster_density_NextSeq","contamination","properly_paired","pct_off_amplicon","fastq_total_sequences","peddy_sex_check"]
 
 # tool specific settings
 tool_settings = {
@@ -343,6 +343,33 @@ tool_settings = {
         "lower_lim_label":False,
         "WES":True,
         "PANEL":True,
+        "SWIFT":False,
+        "NEXTSEQ_LUIGI": False,
+        "NEXTSEQ_MARIO": False,
+        "MISEQ_ONC": False,
+        "MISEQ_DNA": False,
+        "NOVASEQ_PIKACHU": False
+    },
+    "peddy_sex_check":{
+        "function":"parse_multiqc_output",
+        "plot_type":"stacked_bar",
+        "input_file":"multiqc_peddy.txt",
+        "name_column":1,
+        "column_of_interest":20,
+        "header_present":True,
+	    "conversion_to_percent":False,
+        "plot_title":"Correct Sex",
+        "plot_text":"Number of samples with incorrect sex per run",
+        "upper_lim_linestyle":"",
+        "lower_lim_linestyle":"",
+        "lower_lim_linecolour":"",
+        "upper_lim_linecolour":"",
+        "upper_lim":False,
+        "upper_lim_label":False,
+        "lower_lim":False,
+        "lower_lim_label":False,
+        "WES":True,
+        "PANEL":False,
         "SWIFT":False,
         "NEXTSEQ_LUIGI": False,
         "NEXTSEQ_MARIO": False,

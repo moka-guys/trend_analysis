@@ -13,6 +13,8 @@ import config as config
 from jinja2 import Environment, FileSystemLoader
 import argparse
 from shutil import copyfile
+from email.message import Message
+import pandas as pd
 
 def get_arguments():
     """
@@ -104,6 +106,11 @@ class trend_analysis:
                             if config.tool_settings[tool]["plot_type"]=="box_plot":
                                 # box_plot function returns path to saved plot
                                 self.dictionary[tool]["image_location"] = box_plot(tool, self.dictionary,
+                                                                                       self.runtype, self.images_folder)
+
+                            elif config.tool_settings[tool]["plot_type"]=="stacked_bar":
+                                # stacked_bar function returns path to saved plot
+                                self.dictionary[tool]["image_location"] = stacked_bar(tool, self.dictionary,
                                                                                        self.runtype, self.images_folder)
                             elif config.tool_settings[tool]["plot_type"]=="table":
                                 # table function returns a html string
@@ -269,6 +276,44 @@ def box_plot(tool, dictionary, runtype, images_folder):
     image_path=os.path.join(images_folder,runtype + "_" + tool+".png")
     html_image_path = "images/" + runtype + "_" + tool+".png"
     plt.savefig(image_path, bbox_inches="tight",dpi=200)
+    # return the path to the save image
+    return html_image_path
+
+def stacked_bar(tool, dictionary, runtype, images_folder):
+    """
+
+    :return:
+    """
+    # close any previous plots to prevent previous data from being included on same axis
+    plt.close()
+    # build list of x axis labels
+    # We don't know how many runs may be included so label the first as oldest and last as newest (use len of dictionary.keys())
+    xlabels = []
+    for i in range(1, len(dictionary[tool].keys()) + 1):
+        if i == 1:
+            xlabels.append(str(i) + "\noldest")
+        elif i == len(dictionary[tool].keys()):
+            xlabels.append(str(i) + "\nnewest")
+        else:
+            xlabels.append(str(i))
+    # dictionary[tool] is a dictionary, with the run name as key, and a list of values as the value
+    # convert dictionary to a pandas dataframe, count true and false values for each run
+    # transform dataframe so row index is run names
+    print(dictionary[tool].values)
+    df = pd.DataFrame(dictionary[tool]).apply(pd.value_counts)
+    print(df)
+    # replace run names with x axis labels
+    df.columns = xlabels
+    print(df)
+    # Add the data to the plot as bar chart
+    df.T.plot.bar(rot=0)
+    # add the x ticks
+    plt.xticks()
+    plt.ticklabel_format(axis='y', useOffset=False, style='plain')
+    # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
+    image_path = os.path.join(images_folder, runtype + "_" + tool + ".png")
+    html_image_path = "images/" + runtype + "_" + tool + ".png"
+    plt.savefig(image_path, bbox_inches="tight", dpi=200)
     # return the path to the save image
     return html_image_path
 
@@ -441,6 +486,12 @@ def return_columns(file_path,tool):
                     elif config.tool_settings[tool]["conversion_to_percent"]:
                         measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])*100
                         to_return.append(measurement)
+                    elif config.tool_settings[tool]["plot_type"] == "stacked_bar":
+                        measurement = line.split("\t")[config.tool_settings[tool]["column_of_interest"]]
+                        # do not include blank space
+                        print(measurement)
+                        if measurement is not "":
+                            to_return.append(measurement)
                     else:
                         measurement = float(line.split("\t")[config.tool_settings[tool]["column_of_interest"]])
                         to_return.append(measurement)
@@ -462,6 +513,14 @@ def git_tag():
     out, err = proc.communicate()
     #  return standard out, removing any new line characters
     return out.rstrip()
+
+def send_email():
+    """
+    Send email to notify users that a new trend report is complete.
+
+    :return:
+    """
+    return
 
 def check_for_update():
     """
