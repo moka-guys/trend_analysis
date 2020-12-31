@@ -19,7 +19,7 @@ import pandas as pd
 import time
 
 
-def get_arguments():
+def arg_parse():
     """
     Uses argparse module to create an argument parser and define and handle command line arguments
         :return:
@@ -664,7 +664,7 @@ def check_for_update():
 
 
 def main():
-    args = get_arguments()
+    args = arg_parse()
     # If the user runs the script during development
     if args.dev:
         for runtype in config.run_types:
