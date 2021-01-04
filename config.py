@@ -43,7 +43,7 @@ input_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data"
 output_folder = "/var/www/html/mokaguys/multiqc/trend_analysis"
 images_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/images/"
 logopath = "images/viapathlogo.png"
-template_dir = "/usr/local/src/mokaguys/development_area/trend_analysis/html_template"
+template_dir = "/usr/local/src/mokaguys/apps/trend_analysis/html_template"
 archive_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/archive"
 
 # ==== Path to html conversion utility =======================================================
