@@ -106,21 +106,250 @@ class TrendAnalysis(object):
                             # determine plot type required for tool as defined in config
                             if config.tool_settings[tool]["plot_type"] == "box_plot":
                                 # box_plot function returns path to saved plot
-                                self.dictionary[tool]["image_location"] = box_plot(tool, self.dictionary,
-                                                                                   self.runtype, self.images_folder)
+                                self.dictionary[tool]["image_location"] = box_plot(tool)
                             elif config.tool_settings[tool]["plot_type"] == "stacked_bar":
                                 # stacked_bar function returns path to saved plot
-                                self.dictionary[tool]["image_location"] = stacked_bar(tool, self.dictionary,
-                                                                                      self.runtype, self.images_folder)
+                                self.dictionary[tool]["image_location"] = stacked_bar(tool)
                             elif config.tool_settings[tool]["plot_type"] == "table":
                                 # table function returns a html string
-                                self.dictionary[tool]["table_text"] = table(tool, self.dictionary)
+                                self.dictionary[tool]["table_text"] = table(tool)
                             # call function which creates the html module for this tool and append output to self.plots
                             self.plots.append(self.create_tool_plot(tool))
         # after looping through all tools generate report
         self.generate_report()
         # generate archive html
         self.generate_archive_html()
+
+    def describe_run_names(self):
+        """
+        This function is specified as the function to be used in the tool config
+        Populates a table describing the runs included in this analysis
+        Creates sorted list of runs, and builds a dictionary with key as order and value as run name
+            :param tool: (str) allows access to tool specific config settings and of dictionary
+            :param input_folder: (str) path to multiqc data per run
+            :param runtype: (str) runtypes specified in config, to filter available runs
+            :return run_name_dictionary: (dict) dictionary with key as the order, and value the run name
+        """
+        # get date sorted list of runfolders
+        sorted_run_list = sorted_runs(os.listdir(self.input_folder), self.runtype)
+        run_name_dictionary = {}
+        # build dictionary, add oldest and newest to first and last
+        for i in range(1, len(sorted_run_list) + 1):
+            if i == 1:
+                run_name_dictionary[str(i) + " oldest"] = sorted_run_list[i - 1]
+            elif i == len(sorted_run_list):
+                run_name_dictionary[str(i) + " newest"] = sorted_run_list[i - 1]
+            else:
+                run_name_dictionary[str(i)] = sorted_run_list[i - 1]
+        # return the dictionary
+        return run_name_dictionary
+
+    def parse_multiqc_output(self, tool):
+        """
+        This function is specified as the function to be used in the tool config
+        Reads a tool specific output file by multiqc (tend to have a header line then one row per sample)
+        Using the tool specific settings in the config file
+        For each runfolder the find function finds the file
+        Return columns function parses the file, returning relevant data
+        Dictionary is built with run name as key and value as a list of data points.
+            :param tool: (str) allows access to tool specific config settings and of dictionary
+            :param input_folder: (str) path to multiqc data per run
+            :param runtype: (str) runtypes specified in config, to filter available runs
+            :return tool_dict (OrderedDict) dictionary with run name as the key and value is a list of data points
+        """
+        # get the name of the raw data file
+        input_file_name = config.tool_settings[tool]["input_file"]
+        tool_dict = OrderedDict({})
+
+        # for each run find the file and pass it to return_columns, which generates a list
+        # add this to the dictionary
+        for run in sorted_runs(os.listdir(self.input_folder), self.runtype):
+            input_file = find(input_file_name, os.path.join(self.input_folder, run))
+            # input_file = select_input_file(input_file_name, input_folder, run, tool)
+            if input_file:
+                tool_dict[run] = return_columns(input_file, tool)
+        return tool_dict
+
+    def table(self, tool):
+        """
+        Builds a html table using the template in the config file and the run names included in this trend analysis.
+        A table row is added for each run in the dictionary, with dictionary key in column 1 and its value in column 2.
+            :param dictionary: (OrderedDict) dictionary of qc data for all tools
+            :param tool: (str) Tool name which allows access to tool-specific config settings and of dictionary
+            :return rows_html: (str) contains the table body html
+        """
+        # start string
+        rows_html = ""
+        # define the html for a table row
+        html_table_row = "<tr><td >{}</td><td>{}</td></tr>"
+        # for each sample, add to rows_html with the html_table_row, with the placeholders filled
+        # we need to sort the dictionary, as the order of dictionary keys aren't maintained (like a list is).
+        for i in sorted(self.dictionary[tool]):
+            rows_html += html_table_row.format(i, self.dictionary[tool][i])
+        # close table body tag
+        rows_html += "</tbody>"
+        return rows_html
+
+    def box_plot(self, tool):
+        """
+        Builds a box plot and saves the image to a location defined in the config
+        The x axis is labelled with the number of runs included, from oldest to newest
+        Where specified in config, horizontal lines are added to define cutoffs
+            :param dictionary: (OrderedDict) dictionary of qc data for all tools
+            :param tool: (str) allows access to tool specific config settings and of dictionary
+            :param runtype: (str) required as provides one of the elements of the saved plot image name
+            :param images_folder: (str) plot save location
+            :return html_image_path: (str) path to the saved plot specific image
+        """
+        # close any previous plots to prevent previous data from being included on same axis
+        plt.close()
+        # build list of x axis labels
+        # We don't know how many runs may be included so label the first as oldest and last as newest (use len of dictionary.keys())
+        xlabels = []
+        for i in range(1, len(self.dictionary[tool].keys()) + 1):
+            if i == 1:
+                xlabels.append(str(i) + "\noldest")
+            elif i == len(self.dictionary[tool].keys()):
+                xlabels.append(str(i) + "\nnewest")
+            else:
+                xlabels.append(str(i))
+        # Add the data to the plot
+        # dictionary[tool] is a dictionary, with the run name as key, and a list of values as the value
+        plt.boxplot(self.dictionary[tool].values(), labels=xlabels)
+        # so we can draw horizontal cutoffs capture the axis ranges
+        xmin, xmax, ymin, ymax = plt.axis()
+        # add horizontal lines using plt.hlines
+        # the positioning and labels are defined in the config (labels aren't working at the moment for some reason)
+        if config.tool_settings[tool]["upper_lim"]:
+            plt.hlines(config.tool_settings[tool]["upper_lim"], xmin, xmax,
+                       label=config.tool_settings[tool]["upper_lim_label"],
+                       linestyles=config.tool_settings[tool]["upper_lim_linestyle"],
+                       colors=config.tool_settings[tool]["upper_lim_linecolour"])
+        if config.tool_settings[tool]["lower_lim"]:
+            plt.hlines(config.tool_settings[tool]["lower_lim"], xmin, xmax,
+                       label=config.tool_settings[tool]["lower_lim_label"],
+                       linestyles=config.tool_settings[tool]["lower_lim_linestyle"],
+                       colors=config.tool_settings[tool]["lower_lim_linecolour"])
+        # only add legends to plots with bound lines specified in config file
+        if (config.tool_settings[tool]["lower_lim_label"] is not False) or (
+                config.tool_settings[tool]["upper_lim_label"] is not False):
+            plt.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
+        # add the x ticks
+        plt.xticks()
+        plt.ticklabel_format(axis='y', useOffset=False, style='plain')
+        # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
+        image_path = os.path.join(self.images_folder, self.runtype + "_" + tool + ".png")
+        html_image_path = "images/" + self.runtype + "_" + tool + ".png"
+        plt.savefig(image_path, bbox_inches="tight", dpi=200)
+        # return the path to the save image
+        return html_image_path
+
+    def stacked_bar(self, tool):
+        """
+        Creates a stacked bar chart from a dictionary input.
+        :param tool: (str) allows access to tool specific config settings and of dictionary
+        :param dictionary: (OrderedDict) dictionary of qc data for all tools
+
+        :param runtype: (str) required as provides one of the elements of the saved plot image name
+        :param images_folder:
+        :return:
+        """
+        # close any previous plots to prevent previous data from being included on same axis
+        plt.close()
+        # build list of x axis labels
+        # We don't know how many runs may be included so label the first as oldest and last as newest (use len of dictionary.keys())
+        xlabels = []
+        for i in range(1, len(self.dictionary[tool].keys()) + 1):
+            if i == 1:
+                xlabels.append(str(i) + "\noldest")
+            elif i == len(self.dictionary[tool].keys()):
+                xlabels.append(str(i) + "\nnewest")
+            else:
+                xlabels.append(str(i))
+        # dictionary[tool] is a dictionary, with the run name as key, and a list of values as the value
+        # convert dictionary to a pandas dataframe, count true and false values for each run
+        # transform dataframe so row index is run names
+        df = pd.DataFrame(self.dictionary[tool]).apply(pd.value_counts)
+        # replace run names with x axis labels
+        df.columns = xlabels
+        # Add the data to the plot as bar chart
+        df.T.plot.bar(rot=0)
+        # add the x ticks
+        plt.xticks()
+        plt.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
+        plt.ticklabel_format(axis='y', useOffset=False, style='plain')
+        # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
+        image_path = os.path.join(self.images_folder, self.runtype + "_" + tool + ".png")
+        html_image_path = "images/" + self.runtype + "_" + tool + ".png"
+        plt.savefig(image_path, bbox_inches="tight", dpi=200)
+        # return the path to the save image
+        return html_image_path
+
+    def return_column_index(input_file, tool):
+        """
+        Selects the column of interest based on the column heading provided in the config file.
+            :param input_file: (str) name of raw data file (multiqc output file)
+            :param tool: (str) allows access to tool specific config settings and of dictionary
+            :return column_index: (int) index of the column of interest that contains the relevant data for plotting.
+        """
+        # create a list of headers split on tab
+        header_line = [input_file.readline().strip('\n').split("\t")]
+        # get index of column of interest
+        column_index = header_line[0].index(config.tool_settings[tool]["column_of_interest"])
+        return column_index
+
+    def return_columns(file_path, tool):
+        """
+        For a given file, open and for each line (excluding header if required) extract the column of interest as a float.
+        If the tool is the cluster density plot, skips the first seven rows as these are headers.
+        For all other plots, skips the first row as this is the header.
+        Create and return a list of all measurements
+            :param file_path: (str) file to parse
+            :param tool: (str) tool name - allows access to tool specific config settings
+            :return to_return: (list) a list of measurements from the column of interest
+        """
+        # list for sample specific measurements
+        to_return = []
+        # open file
+        with open(file_path, 'r') as input_file:
+            # select column index of interest
+            column_index = return_column_index(input_file, tool)
+            # enumerate the list of lines as loop through it so we can skip the header if needed
+            for linecount, line in enumerate(input_file):
+                # if the tool is the cluster density plot, skip the first 7 rows as these are headers
+                if config.tool_settings[tool]["input_file"] == "illumina_lane_metrics":
+                    if config.tool_settings[tool]["header_present"] and 0 <= linecount <= 6:
+                        pass
+                    else:
+                        # ignore blank lines, split the line, pull out column of interest, divide by 1000, add to list
+                        if not line.isspace():
+                            measurement = float(line.split("\t")[column_index]) / 1000
+                            to_return.append(measurement)
+                # for all other tool types
+                else:
+                    # skip header row
+                    if config.tool_settings[tool]["header_present"] and linecount == 0:
+                        pass
+                    else:
+                        # exclude negative control stats from the "properly_paired" and "pct_off_amplicon" plots
+                        if (config.tool_settings[tool]["input_file"] in ["multiqc_picard_pcrmetrics.txt",
+                                                                         "multiqc_samtools_flagstat.txt"]) and (
+                                "NTCcon" in line):
+                            pass
+                        # for all other rows that aren't header rows, split line, pull out column of interest, add to list
+                        elif config.tool_settings[tool]["conversion_to_percent"]:
+                            measurement = float(line.split("\t")[column_index]) * 100
+                            to_return.append(measurement)
+                        elif config.tool_settings[tool]["plot_type"] == "stacked_bar":
+                            measurement = line.split("\t")[column_index]
+                            # do not include blank space
+                            if measurement is not "":
+                                to_return.append(measurement)
+                        else:
+                            measurement = float(line.split("\t")[column_index])
+                            to_return.append(measurement)
+        # return list
+        return to_return
 
     def create_tool_plot(self, tool):
         """
@@ -245,6 +474,7 @@ class Emails(object):
         self.email_subject = email_subject
         self.mokaguys_email = config.mokaguys_email
         self.logfile_path = os.path.join(self.input_folder + '/{}/email_logfile')
+        self.email_file = "email_logfile"
 
     def call_tools(self):
         """
@@ -268,10 +498,9 @@ class Emails(object):
         """
         new_runs = []
         for run in run_list:
-            logfile_path = self.logfile_path.format(run)
-            run_folder = os.listdir(os.path.join(self.input_folder + '/' + run))
+            run_folder = os.path.join(self.input_folder + '/' + run)
             # if the run has previously been analysed (logfile present and 'Email sent' logged)
-            if "email_logfile" in run_folder and "email sent" in open(logfile_path, "r").read():
+            if find(self.email_file, run_folder) and open(find(self.email_file, run_folder), "r").read():
                 pass
             else:
                 # run has not been analysed so append to new_runs list
@@ -325,124 +554,6 @@ class Emails(object):
         return
 
 
-def table(tool, dictionary):
-    """
-    Builds a html table using the template in the config file and the run names included in this trend analysis.
-    A table row is added for each run in the dictionary, with dictionary key in column 1 and its value in column 2.
-        :param dictionary: (OrderedDict) dictionary of qc data for all tools
-        :param tool: (str) Tool name which allows access to tool-specific config settings and of dictionary
-        :return rows_html: (str) contains the table body html
-    """
-    # start string
-    rows_html = ""
-    # define the html for a table row
-    html_table_row = "<tr><td >{}</td><td>{}</td></tr>"
-    # for each sample, add to rows_html with the html_table_row, with the placeholders filled
-    # we need to sort the dictionary, as the order of dictionary keys aren't maintained (like a list is).
-    for i in sorted(dictionary[tool]):
-        rows_html += html_table_row.format(i, dictionary[tool][i])
-    # close table body tag
-    rows_html += "</tbody>"
-    return rows_html
-
-
-def box_plot(tool, dictionary, runtype, images_folder):
-    """
-    Builds a box plot and saves the image to a location defined in the config
-    The x axis is labelled with the number of runs included, from oldest to newest
-    Where specified in config, horizontal lines are added to define cutoffs
-        :param dictionary: (OrderedDict) dictionary of qc data for all tools
-        :param tool: (str) allows access to tool specific config settings and of dictionary
-        :param runtype: (str) required as provides one of the elements of the saved plot image name
-        :param images_folder: (str) plot save location
-        :return html_image_path: (str) path to the saved plot specific image
-    """
-    # close any previous plots to prevent previous data from being included on same axis
-    plt.close()
-    # build list of x axis labels
-    # We don't know how many runs may be included so label the first as oldest and last as newest (use len of dictionary.keys())
-    xlabels = []
-    for i in range(1, len(dictionary[tool].keys()) + 1):
-        if i == 1:
-            xlabels.append(str(i) + "\noldest")
-        elif i == len(dictionary[tool].keys()):
-            xlabels.append(str(i) + "\nnewest")
-        else:
-            xlabels.append(str(i))
-    # Add the data to the plot
-    # dictionary[tool] is a dictionary, with the run name as key, and a list of values as the value
-    plt.boxplot(dictionary[tool].values(), labels=xlabels)
-    # so we can draw horizontal cutoffs capture the axis ranges
-    xmin, xmax, ymin, ymax = plt.axis()
-    # add horizontal lines using plt.hlines
-    # the positioning and labels are defined in the config (labels aren't working at the moment for some reason)
-    if config.tool_settings[tool]["upper_lim"]:
-        plt.hlines(config.tool_settings[tool]["upper_lim"], xmin, xmax,
-                   label=config.tool_settings[tool]["upper_lim_label"],
-                   linestyles=config.tool_settings[tool]["upper_lim_linestyle"],
-                   colors=config.tool_settings[tool]["upper_lim_linecolour"])
-    if config.tool_settings[tool]["lower_lim"]:
-        plt.hlines(config.tool_settings[tool]["lower_lim"], xmin, xmax,
-                   label=config.tool_settings[tool]["lower_lim_label"],
-                   linestyles=config.tool_settings[tool]["lower_lim_linestyle"],
-                   colors=config.tool_settings[tool]["lower_lim_linecolour"])
-    # only add legends to plots with bound lines specified in config file
-    if (config.tool_settings[tool]["lower_lim_label"] is not False) or (
-            config.tool_settings[tool]["upper_lim_label"] is not False):
-        plt.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
-    # add the x ticks
-    plt.xticks()
-    plt.ticklabel_format(axis='y', useOffset=False, style='plain')
-    # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
-    image_path = os.path.join(images_folder, runtype + "_" + tool + ".png")
-    html_image_path = "images/" + runtype + "_" + tool + ".png"
-    plt.savefig(image_path, bbox_inches="tight", dpi=200)
-    # return the path to the save image
-    return html_image_path
-
-
-def stacked_bar(tool, dictionary, runtype, images_folder):
-    """
-    Creates a stacked bar chart from a dictionary input.
-    :param tool: (str) allows access to tool specific config settings and of dictionary
-    :param dictionary: (OrderedDict) dictionary of qc data for all tools
-
-    :param runtype: (str) required as provides one of the elements of the saved plot image name
-    :param images_folder:
-    :return:
-    """
-    # close any previous plots to prevent previous data from being included on same axis
-    plt.close()
-    # build list of x axis labels
-    # We don't know how many runs may be included so label the first as oldest and last as newest (use len of dictionary.keys())
-    xlabels = []
-    for i in range(1, len(dictionary[tool].keys()) + 1):
-        if i == 1:
-            xlabels.append(str(i) + "\noldest")
-        elif i == len(dictionary[tool].keys()):
-            xlabels.append(str(i) + "\nnewest")
-        else:
-            xlabels.append(str(i))
-    # dictionary[tool] is a dictionary, with the run name as key, and a list of values as the value
-    # convert dictionary to a pandas dataframe, count true and false values for each run
-    # transform dataframe so row index is run names
-    df = pd.DataFrame(dictionary[tool]).apply(pd.value_counts)
-    # replace run names with x axis labels
-    df.columns = xlabels
-    # Add the data to the plot as bar chart
-    df.T.plot.bar(rot=0)
-    # add the x ticks
-    plt.xticks()
-    plt.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
-    plt.ticklabel_format(axis='y', useOffset=False, style='plain')
-    # set the path to save image using the config location, run type (WES, PANEL, ONC) and tool name.
-    image_path = os.path.join(images_folder, runtype + "_" + tool + ".png")
-    html_image_path = "images/" + runtype + "_" + tool + ".png"
-    plt.savefig(image_path, bbox_inches="tight", dpi=200)
-    # return the path to the save image
-    return html_image_path
-
-
 def sorted_runs(run_list, runtype):
     """
     The runs should be plotted in date order, oldest to newest.
@@ -486,64 +597,12 @@ def sorted_runs(run_list, runtype):
     return sortedruns[-config.number_of_runs_to_include:]
 
 
-def parse_multiqc_output(tool, input_folder, runtype):
-    """
-    This function is specified as the function to be used in the tool config
-    Reads a tool specific output file by multiqc (tend to have a header line then one row per sample)
-    Using the tool specific settings in the config file
-    For each runfolder the find function finds the file
-    Return columns function parses the file, returning relevant data
-    Dictionary is built with run name as key and value as a list of data points.
-        :param tool: (str) allows access to tool specific config settings and of dictionary
-        :param input_folder: (str) path to multiqc data per run
-        :param runtype: (str) runtypes specified in config, to filter available runs
-        :return tool_dict (OrderedDict) dictionary with run name as the key and value is a list of data points
-    """
-    # get the name of the raw data file
-    input_file_name = config.tool_settings[tool]["input_file"]
-    tool_dict = OrderedDict({})
-
-    # for each run find the file and pass it to return_columns, which generates a list
-    # add this to the dictionary
-    for run in sorted_runs(os.listdir(input_folder), runtype):
-        input_file = find(input_file_name, os.path.join(input_folder, run))
-        # input_file = select_input_file(input_file_name, input_folder, run, tool)
-        if input_file:
-            tool_dict[run] = return_columns(input_file, tool)
-    return tool_dict
-
-
-def describe_run_names(tool, input_folder, runtype):
-    """
-    This function is specified as the function to be used in the tool config
-    Populates a table describing the runs included in this analysis
-    Creates sorted list of runs, and builds a dictionary with key as order and value as run name
-        :param tool: (str) allows access to tool specific config settings and of dictionary
-        :param input_folder: (str) path to multiqc data per run
-        :param runtype: (str) runtypes specified in config, to filter available runs
-        :return run_name_dictionary: (dict) dictionary with key as the order, and value the run name
-    """
-    # get date sorted list of runfolders
-    sorted_run_list = sorted_runs(os.listdir(input_folder), runtype)
-    run_name_dictionary = {}
-    # build dictionary, add oldest and newest to first and last
-    for i in range(1, len(sorted_run_list) + 1):
-        if i == 1:
-            run_name_dictionary[str(i) + " oldest"] = sorted_run_list[i - 1]
-        elif i == len(sorted_run_list):
-            run_name_dictionary[str(i) + " newest"] = sorted_run_list[i - 1]
-        else:
-            run_name_dictionary[str(i)] = sorted_run_list[i - 1]
-    # return the dictionary
-    return run_name_dictionary
-
-
 def find(name, path):
     """
     Use os.walk to recursively search through all files in a folder
     Return the path to identified file
-        :param name: (str) filename from config file
-        :param path: (str) path to the file containing all QC files for that run
+        :param name: (str) filename
+        :param path: (str) path to the folder containing all QC files for that run
         :return: (str) path to file of interest. Only returned if the file exists for that run.
     """
     for root, dirs, files in os.walk(path):
@@ -552,74 +611,6 @@ def find(name, path):
                 return os.path.join(root, filename)
     print "no output named {} for run {}".format(name, path)
     return False
-
-
-def return_column_index(input_file, tool):
-    """
-    Selects the column of interest based on the column heading provided in the config file.
-        :param input_file: (str) name of raw data file (multiqc output file)
-        :param tool: (str) allows access to tool specific config settings and of dictionary
-        :return column_index: (int) index of the column of interest that contains the relevant data for plotting.
-    """
-    # create a list of headers split on tab
-    header_line = [input_file.readline().strip('\n').split("\t")]
-    # get index of column of interest
-    column_index = header_line[0].index(config.tool_settings[tool]["column_of_interest"])
-    return column_index
-
-
-def return_columns(file_path, tool):
-    """
-    For a given file, open and for each line (excluding header if required) extract the column of interest as a float.
-    If the tool is the cluster density plot, skips the first seven rows as these are headers.
-    For all other plots, skips the first row as this is the header.
-    Create and return a list of all measurements
-        :param file_path: (str) file to parse
-        :param tool: (str) tool name - allows access to tool specific config settings
-        :return to_return: (list) a list of measurements from the column of interest
-    """
-    # list for sample specific measurements
-    to_return = []
-    # open file
-    with open(file_path, 'r') as input_file:
-        # select column index of interest
-        column_index = return_column_index(input_file, tool)
-        # enumerate the list of lines as loop through it so we can skip the header if needed
-        for linecount, line in enumerate(input_file):
-            # if the tool is the cluster density plot, skip the first 7 rows as these are headers
-            if config.tool_settings[tool]["input_file"] == "illumina_lane_metrics":
-                if config.tool_settings[tool]["header_present"] and 0 <= linecount <= 6:
-                    pass
-                else:
-                    # ignore blank lines, split the line, pull out column of interest, divide by 1000, add to list
-                    if not line.isspace():
-                        measurement = float(line.split("\t")[column_index]) / 1000
-                        to_return.append(measurement)
-            # for all other tool types
-            else:
-                # skip header row
-                if config.tool_settings[tool]["header_present"] and linecount == 0:
-                    pass
-                else:
-                    # exclude negative control stats from the "properly_paired" and "pct_off_amplicon" plots
-                    if (config.tool_settings[tool]["input_file"] in ["multiqc_picard_pcrmetrics.txt",
-                                                                     "multiqc_samtools_flagstat.txt"]) and (
-                            "NTCcon" in line):
-                        pass
-                    # for all other rows that aren't header rows, split line, pull out column of interest, add to list
-                    elif config.tool_settings[tool]["conversion_to_percent"]:
-                        measurement = float(line.split("\t")[column_index]) * 100
-                        to_return.append(measurement)
-                    elif config.tool_settings[tool]["plot_type"] == "stacked_bar":
-                        measurement = line.split("\t")[column_index]
-                        # do not include blank space
-                        if measurement is not "":
-                            to_return.append(measurement)
-                    else:
-                        measurement = float(line.split("\t")[column_index])
-                        to_return.append(measurement)
-    # return list
-    return to_return
 
 
 def git_tag():
