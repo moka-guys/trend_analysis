@@ -251,7 +251,7 @@ class Emails(object):
         Call methods required for email sending.
         """
         # create runlist for all runs of the runtype
-        run_list = sorted_runs(os.listdir(self.input_folder), self.input_folder, self.runtype)
+        run_list = sorted_runs(os.listdir(self.input_folder), self.runtype)
         # check whether any of these runs are new and not yet included in the trend reports
         new_runs = self.check_sent(run_list)
         if new_runs:
@@ -443,7 +443,7 @@ def stacked_bar(tool, dictionary, runtype, images_folder):
     return html_image_path
 
 
-def sorted_runs(run_list, input_folder, runtype):
+def sorted_runs(run_list, runtype):
     """
     The runs should be plotted in date order, oldest to newest.
     The runs included in the analysis are saved in run specific folders, named with the runfolder name (002_YYMMDD_[*WES*,*NGS*,*ONC*])
@@ -460,29 +460,21 @@ def sorted_runs(run_list, input_folder, runtype):
         # if run of interest, extract the date and add this as a key to the  dict
         # add run name as the value
         if runtype == "WES" and "WES" in run:
-            if not len(os.listdir(input_folder + '/' + run)) == 0:
-                dates[(int(run.split("_")[1]))] = run
+            dates[(int(run.split("_")[1]))] = run
         if runtype == "PANEL" and "NGS" in run and "WES" not in run:
-            if not len(os.listdir(input_folder + '/' + run)) == 0:
-                dates[(int(run.split("_")[1]))] = run
+            dates[(int(run.split("_")[1]))] = run
         if runtype == "SWIFT" and "ONC" in run:
-            if not len(os.listdir(input_folder + '/' + run)) == 0:
-                dates[(int(run.split("_")[1]))] = run
+            dates[(int(run.split("_")[1]))] = run
         if runtype == "NEXTSEQ_LUIGI" and "NB552085" in run:
-            if not len(os.listdir(input_folder + '/' + run)) == 0:
-                dates[(int(run.split("_")[1]))] = run
+            dates[(int(run.split("_")[1]))] = run
         if runtype == "NEXTSEQ_MARIO" and "NB551068" in run:
-            if not len(os.listdir(input_folder + '/' + run)) == 0:
-                dates[(int(run.split("_")[1]))] = run
+            dates[(int(run.split("_")[1]))] = run
         if runtype == "MISEQ_ONC" and "M02353" in run:
-            if not len(os.listdir(input_folder + '/' + run)) == 0:
-                dates[(int(run.split("_")[1]))] = run
+            dates[(int(run.split("_")[1]))] = run
         if runtype == "MISEQ_DNA" and "M02631" in run:
-            if not len(os.listdir(input_folder + '/' + run)) == 0:
-                dates[(int(run.split("_")[1]))] = run
+            dates[(int(run.split("_")[1]))] = run
         if runtype == "NOVASEQ_PIKACHU" and "A01229" in run:
-            if not len(os.listdir(input_folder + '/' + run)) == 0:
-                dates[(int(run.split("_")[1]))] = run
+            dates[(int(run.split("_")[1]))] = run
 
     # sort the list of dates, identify the full run name and append to sorted list
     sortedruns = []
@@ -513,7 +505,7 @@ def parse_multiqc_output(tool, input_folder, runtype):
 
     # for each run find the file and pass it to return_columns, which generates a list
     # add this to the dictionary
-    for run in sorted_runs(os.listdir(input_folder), input_folder, runtype):
+    for run in sorted_runs(os.listdir(input_folder), runtype):
         input_file = find(input_file_name, os.path.join(input_folder, run))
         # input_file = select_input_file(input_file_name, input_folder, run, tool)
         if input_file:
@@ -532,7 +524,7 @@ def describe_run_names(tool, input_folder, runtype):
         :return run_name_dictionary: (dict) dictionary with key as the order, and value the run name
     """
     # get date sorted list of runfolders
-    sorted_run_list = sorted_runs(os.listdir(input_folder), input_folder, runtype)
+    sorted_run_list = sorted_runs(os.listdir(input_folder), runtype)
     run_name_dictionary = {}
     # build dictionary, add oldest and newest to first and last
     for i in range(1, len(sorted_run_list) + 1):
