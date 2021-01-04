@@ -1,11 +1,14 @@
 import pytest, sys, os
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from read_qc_files import arg_parse
 import argparse
+
 try:
     from unittest import mock  # python 3.3+
 except ImportError:
     import mock  # python 2.6-3.2
+
 
 def test_arg_parse_dev():
     """
