@@ -8,10 +8,46 @@ This script is designed to run on the viapath genomics server and creates a tren
 * python-tk (v2.7.12-1~16.04)
 * wkhtmltopdf (0.12.6-1.xenial_amd64) - When running headless this should be downloaded from github so the repo includes a patches version of QT (not included when instlaling from apt repositories)
 
+## Running the script
+Development mode provides alternative paths/inputs within the config file to prevent altering live reports/sending alert emails. 
+* The script can be run during development using the argument '--dev':
+  ```
+  sudo python read_qc_files.py --dev
+  ```
+* The script is run automatically during production mode using the following command:
+  ```
+  sudo python read_qc_files.py
+  ```
+* Tests are contained within the test_read_qc_files.py script and can be run using pytest:
+  ```
+  sudo python -m pytest
+  ```
+
 ## How does read_qc_files.py work?
 ###  Inputs
-* A directory containing one directory per runfolder
-* Tool specific settings (in the config file)
+* All inputs are specified in the config.py file which contains production and development-mode specific inputs
+* Tool specific settings are specified in the config file
+* A runfolder per run containing MultiQC output files 
+
+### Runs included in the report
+* The runs present on the server are filtered depending on run type and the name parsed to extract the date.
+* The most recent x number of runs are included on the report (where x is defined by config.number_of_runs_to_include)
+
+### Run/sequencer types
+Runs are categorised by run type and sequencer by the script, which checks for the following identifiers in the run name:
+
+| Run type | Run name |
+| ----------|-----------|
+| Custom Panels | Presence of "NGS" and "WES" |
+| SWIFT | Presence of "NGS" and absence of "WES" |
+| NextSeq (Luigi) | Presence of "NB552085" |
+| NextSeq (Mario) | Presence of "NB551068" |
+| MiSeq (Molecular Oncology) | Presence of "M02353" |
+| MiSeq (DNA Lab) | Presence of "M02631" |
+| NovaSeq (Pikachu) | Presence of "A01229" |
+
+### index.html 
+The index.html file contains links to the individual MultiQC reports, and to the WES, Custom Panels and SWIFT trend reports, and the archived reports. It also contains a link to a sequencers.html file which links to each sequencer-specific trend report.
 
 ### Steps
 #### Checking if new trend analysis is required
@@ -37,29 +73,3 @@ This script is designed to run on the viapath genomics server and creates a tren
 * For each run for each run type the script checks for the presence of an email logfile
 * If email logfile is present and contains email sending log, no emails are sent
 * If email logfile is not present, email is sent to the relevant address and a logfile is created and written to
-
-### Runs included in the report
-* The runs present on the server are filtered depending on run type and the name parsed to extract the date.
-* The most recent x number of runs are included on the report (where x is defined by config.number_of_runs_to_include)
-
-### Run/sequencer types
-Runs are categorised by run type and sequencer by the script, which checks for the following identifiers in the run name:
-
-| Run type | Run name |
-| ----------|-----------|
-| Custom Panels | Presence of "NGS" and "WES" |
-| SWIFT | Presence of "NGS" and absence of "WES" |
-| NextSeq (Luigi) | Presence of "NB552085" |
-| NextSeq (Mario) | Presence of "NB551068" |
-| MiSeq (Molecular Oncology) | Presence of "M02353" |
-| MiSeq (DNA Lab) | Presence of "M02631" |
-| NovaSeq (Pikachu) | Presence of "A01229" |
-
-### index.html 
-The index.html file contains links to the individual MultiQC reports, and to the WES, Custom Panels and SWIFT trend reports, and the archived reports. It also contains a link to a sequencers.html file which links to each sequencer-specific trend report. 
-
-### Development mode
-* The script can be run during development using the argument '--dev'
-* This provides an alternative path for outputs to prevent live reports from being altered
-
-### Testing mode
