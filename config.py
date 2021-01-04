@@ -27,6 +27,15 @@ wes_email = "gst-tr.wesviapath@nhs.net"
 oncology_ops_email = "m.neat@nhs.net"
 custom_panels_email = ""
 email_subject = "MOKAPIPE ALERT : Finished pipeline for {} - MultiQC report available and trend analysis updated"
+email_message = """"
+        The MultiQC report is available for: 
+        {}       
+         
+        Trend analysis report has been updated to include these runs. Available at {}.
+        
+        Sent using trend_analysis {} 
+        """
+reports_link = "https://genomics.viapath.co.uk/mokaguys/multiqc/"
 
 # ==== Folder paths ==========================================================================
 index_file = "/var/www/html/mokaguys/multiqc/index.html"
@@ -54,6 +63,7 @@ plot_order = ["run_names", "q30_percent", "picard_insertsize", "on_target_vs_sel
 # Dev email server settings
 dev_recipient = "gst-tr.mokaguys@nhs.net"
 dev_email_subject = "TREND ANALYSIS TEST: Finished pipeline for {} - MultiQC report available and trend analysis updated"
+dev_reports_link = "https://genomics.viapath.co.uk/mokaguys/dev/multiqc/"
 
 # Dev folder paths
 dev_input_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/test_multiqc_data"

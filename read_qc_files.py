@@ -29,7 +29,7 @@ def arg_parse():
     # defines command line arguments
     parser.add_argument(
         '-d', '--dev', action='store_true', help="uses development output file locations (ensures live "
-                                                 "app isn't refreshed during development and testing)",
+                                                 "reports aren't overwritten during development and testing)",
     )
     return parser.parse_args()
 
@@ -54,24 +54,12 @@ class TrendAnalysis(object):
         path to html templates
     archive_folder : str
         path to archived html reports
-
-    Methods
-    _______
-    call_tools(self):
-        For each tool in the config file, determines the modules used to parse the data.
-        Returns a dictionary for each tool which is used to create the plot for that tool.
-        Creates a html module for that tool.
-    create_tool_plot(self, tool):
-        Builds tool-specific html modules using a template within the config file.
-    populate_html_template(plot_title, plot_image, plot_text, template):
-        Populates a html template for a single plot, which can then be added to the larger template.
-    generate_report(self):
-        Inserts all plot specific html segments into the report template, and save report to provided location.
-    generate_archive_html(self):
-        Add created trend report as a link to the archive_index.html so legacy reports are available to users.
-    """
+   """
 
     def __init__(self, input_folder, output_folder, runtype, images_folder, template_dir, archive_folder):
+        """
+        The constructor for TrendAnalysis class
+        """
         self.dictionary = OrderedDict({})
         self.plots = []
         self.runtype = runtype
@@ -125,9 +113,6 @@ class TrendAnalysis(object):
         This function is specified as the function to be used in the tool config
         Populates a table describing the runs included in this analysis
         Creates sorted list of runs, and builds a dictionary with key as order and value as run name
-            :param tool: (str) allows access to tool specific config settings and of dictionary
-            :param input_folder: (str) path to multiqc data per run
-            :param runtype: (str) runtypes specified in config, to filter available runs
             :return run_name_dictionary: (dict) dictionary with key as the order, and value the run name
         """
         # get date sorted list of runfolders
@@ -153,8 +138,6 @@ class TrendAnalysis(object):
         Return columns function parses the file, returning relevant data
         Dictionary is built with run name as key and value as a list of data points.
             :param tool: (str) allows access to tool specific config settings and of dictionary
-            :param input_folder: (str) path to multiqc data per run
-            :param runtype: (str) runtypes specified in config, to filter available runs
             :return tool_dict (OrderedDict) dictionary with run name as the key and value is a list of data points
         """
         # get the name of the raw data file
@@ -174,7 +157,6 @@ class TrendAnalysis(object):
         """
         Builds a html table using the template in the config file and the run names included in this trend analysis.
         A table row is added for each run in the dictionary, with dictionary key in column 1 and its value in column 2.
-            :param dictionary: (OrderedDict) dictionary of qc data for all tools
             :param tool: (str) Tool name which allows access to tool-specific config settings and of dictionary
             :return rows_html: (str) contains the table body html
         """
@@ -195,11 +177,8 @@ class TrendAnalysis(object):
         Builds a box plot and saves the image to a location defined in the config
         The x axis is labelled with the number of runs included, from oldest to newest
         Where specified in config, horizontal lines are added to define cutoffs
-            :param dictionary: (OrderedDict) dictionary of qc data for all tools
             :param tool: (str) allows access to tool specific config settings and of dictionary
-            :param runtype: (str) required as provides one of the elements of the saved plot image name
-            :param images_folder: (str) plot save location
-            :return html_image_path: (str) path to the saved plot specific image
+            :return html_image_path: (str) path to the saved plot
         """
         # close any previous plots to prevent previous data from being included on same axis
         plt.close()
@@ -248,11 +227,7 @@ class TrendAnalysis(object):
         """
         Creates a stacked bar chart from a dictionary input.
         :param tool: (str) allows access to tool specific config settings and of dictionary
-        :param dictionary: (OrderedDict) dictionary of qc data for all tools
-
-        :param runtype: (str) required as provides one of the elements of the saved plot image name
-        :param images_folder:
-        :return:
+        :return html_image_path: (str) path to the saved plot
         """
         # close any previous plots to prevent previous data from being included on same axis
         plt.close()
@@ -285,6 +260,7 @@ class TrendAnalysis(object):
         # return the path to the save image
         return html_image_path
 
+    @staticmethod
     def return_column_index(input_file, tool):
         """
         Selects the column of interest based on the column heading provided in the config file.
@@ -298,6 +274,7 @@ class TrendAnalysis(object):
         column_index = header_line[0].index(config.tool_settings[tool]["column_of_interest"])
         return column_index
 
+    @staticmethod
     def return_columns(file_path, tool):
         """
         For a given file, open and for each line (excluding header if required) extract the column of interest as a float.
@@ -465,7 +442,7 @@ class Emails(object):
     """
 
     def __init__(self, input_folder, runtype, wes_email, oncology_ops_email, custom_panels_email,
-                 email_subject):
+                 email_subject, email_message, hyperlink):
         self.input_folder = input_folder
         self.runtype = runtype
         self.wes_email = wes_email
@@ -475,6 +452,8 @@ class Emails(object):
         self.mokaguys_email = config.mokaguys_email
         self.logfile_path = os.path.join(self.input_folder + '/{}/email_logfile')
         self.email_file = "email_logfile"
+        self.email_message = email_message
+        self.hyperlink = hyperlink
 
     def call_tools(self):
         """
@@ -514,8 +493,11 @@ class Emails(object):
             :param new_runs: (list) list of runs that have not yet been analysed
         """
         # set email message and recipients
-        email_message = ("The MultiQC report is available for " + ", ".join(
-            new_runs) + " and the trend analysis has been updated")
+        place_holder_values = {
+            "run_list": "\n".join(new_runs),
+            "hyperlink": self.hyperlink,
+            "version": git_tag()}
+        message_body = self.email_message.format(**place_holder_values)
 
         if self.runtype == "WES":
             recipients = [self.wes_email, self.mokaguys_email]
@@ -527,10 +509,10 @@ class Emails(object):
         # create message object, set priority, subject, recipients, sender and body
         m = Message()
         m["X-Priority"] = str("3")
-        m["Subject"] = self.email_subject.format(", ".join(new_runs))
+        m["Subject"] = self.email_subject.format(place_holder_values["run_list"])
         m['To'] = ", ".join(recipients)
         m['From'] = config.moka_alerts_email
-        m.set_payload(email_message)
+        m.set_payload(message_body)
 
         # server details
         server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
@@ -539,6 +521,7 @@ class Emails(object):
         server.ehlo()
         server.login(config.user, config.pw)
         server.sendmail(config.moka_alerts_email, recipients, m.as_string())
+        return
 
     def create_email_logfile(self, new_runs):
         """
@@ -560,7 +543,6 @@ def sorted_runs(run_list, runtype):
     The runs included in the analysis are saved in run specific folders, named with the runfolder name (002_YYMMDD_[*WES*,*NGS*,*ONC*])
     Extract the date of the run from the folder name and create an ordered list
         :param run_list: (list) List of run folders to be included in trend analysis
-        :param input_folder: (str) path to multiqc data per run
         :param runtype: (str) runtypes specified in config, to filter available runs
         :return (list) list of most recent runfolder names, in date ascending order (oldest first)
     """
@@ -658,8 +640,10 @@ def main():
             t.call_tools()
             e = Emails(input_folder=config.dev_input_folder, runtype=runtype, wes_email=config.dev_recipient,
                        oncology_ops_email=config.dev_recipient, custom_panels_email=config.dev_recipient,
-                       email_subject=config.dev_email_subject)
+                       email_subject=config.dev_email_subject, email_message=config.email_message,
+                       hyperlink=config.dev_reports_link)
             e.call_tools()
+        # copies current index file over from live environment
         copyfile(src=config.index_file, dst=config.dev_index_file)
 
     # If the script is run in the production environment
@@ -673,7 +657,8 @@ def main():
                 t.call_tools()
                 e = Emails(input_folder=config.input_folder, runtype=runtype, wes_email=config.wes_email,
                            oncology_ops_email=config.oncology_ops_email,
-                           custom_panels_email=config.custom_panels_email, email_subject=config.email_subject)
+                           custom_panels_email=config.custom_panels_email, email_subject=config.email_subject,
+                           email_message=config.email_message, hyperlink=config.reports_link)
                 e.call_tools()
 
 
