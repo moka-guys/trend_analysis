@@ -27,7 +27,7 @@ wes_email = "gst-tr.wesviapath@nhs.net"
 oncology_ops_email = "m.neat@nhs.net"
 custom_panels_email = ""
 email_subject = "MOKAPIPE ALERT : Finished pipeline for {} - MultiQC report available and trend analysis updated"
-email_message = """"
+email_message = """
         The MultiQC report is available for: 
         {}       
          
