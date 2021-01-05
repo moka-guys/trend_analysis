@@ -69,13 +69,14 @@ class TrendAnalysis(object):
         self.template_dir = template_dir
         self.archive_folder = archive_folder
 
-    def call_tools(self):
+    def call_tools(self, methods):
         """
         Loop through the list of tools in config.plot_order
         For each tool, determine which module should be used to parse the data (defined by the function property of the tool config)
         For each tool return a dictionary containing run numbers as keys, and a list of values as the value
         Create a plot using the plot type defined in the tool config (box_plot or table functions)
         Create a html module for the tool (self.create_tool_plot)
+        :param methods (list):
         """
         # for each tool in the prescribed order
         for tool in config.plot_order:
@@ -83,24 +84,24 @@ class TrendAnalysis(object):
             if config.tool_settings[tool][self.runtype]:
                 print tool, self.runtype
                 # parse the list of available modules in this script
-                for name, obj in inspect.getmembers(sys.modules[__name__]):
+                for name, obj in methods:
                     # if the module is described in the tool config (function) call that object
                     if config.tool_settings[tool]["function"] in name:
                         # eg if config.tool_settings[tool]["function"] == parse_multiqc_output
                         # parse_multiqc_output function is called and dictionary returned
-                        self.dictionary[tool] = obj(tool, self.input_folder, self.runtype)
+                        self.dictionary[tool] = obj(tool)
                         # if the dictionary is populated (might not find the expected inputs)
                         if self.dictionary[tool]:
                             # determine plot type required for tool as defined in config
                             if config.tool_settings[tool]["plot_type"] == "box_plot":
                                 # box_plot function returns path to saved plot
-                                self.dictionary[tool]["image_location"] = box_plot(tool)
+                                self.dictionary[tool]["image_location"] = self.box_plot(tool)
                             elif config.tool_settings[tool]["plot_type"] == "stacked_bar":
                                 # stacked_bar function returns path to saved plot
-                                self.dictionary[tool]["image_location"] = stacked_bar(tool)
+                                self.dictionary[tool]["image_location"] = self.stacked_bar(tool)
                             elif config.tool_settings[tool]["plot_type"] == "table":
                                 # table function returns a html string
-                                self.dictionary[tool]["table_text"] = table(tool)
+                                self.dictionary[tool]["table_text"] = self.build_table(tool)
                             # call function which creates the html module for this tool and append output to self.plots
                             self.plots.append(self.create_tool_plot(tool))
         # after looping through all tools generate report
@@ -108,7 +109,7 @@ class TrendAnalysis(object):
         # generate archive html
         self.generate_archive_html()
 
-    def describe_run_names(self):
+    def describe_run_names(self, tool):
         """
         This function is specified as the function to be used in the tool config
         Populates a table describing the runs included in this analysis
@@ -150,10 +151,10 @@ class TrendAnalysis(object):
             input_file = find(input_file_name, os.path.join(self.input_folder, run))
             # input_file = select_input_file(input_file_name, input_folder, run, tool)
             if input_file:
-                tool_dict[run] = return_columns(input_file, tool)
+                tool_dict[run] = self.return_columns(input_file, tool)
         return tool_dict
 
-    def table(self, tool):
+    def build_table(self, tool):
         """
         Builds a html table using the template in the config file and the run names included in this trend analysis.
         A table row is added for each run in the dictionary, with dictionary key in column 1 and its value in column 2.
@@ -260,8 +261,7 @@ class TrendAnalysis(object):
         # return the path to the save image
         return html_image_path
 
-    @staticmethod
-    def return_column_index(input_file, tool):
+    def return_column_index(self, input_file, tool):
         """
         Selects the column of interest based on the column heading provided in the config file.
             :param input_file: (str) name of raw data file (multiqc output file)
@@ -274,8 +274,7 @@ class TrendAnalysis(object):
         column_index = header_line[0].index(config.tool_settings[tool]["column_of_interest"])
         return column_index
 
-    @staticmethod
-    def return_columns(file_path, tool):
+    def return_columns(self, file_path, tool):
         """
         For a given file, open and for each line (excluding header if required) extract the column of interest as a float.
         If the tool is the cluster density plot, skips the first seven rows as these are headers.
@@ -290,7 +289,7 @@ class TrendAnalysis(object):
         # open file
         with open(file_path, 'r') as input_file:
             # select column index of interest
-            column_index = return_column_index(input_file, tool)
+            column_index = self.return_column_index(input_file, tool)
             # enumerate the list of lines as loop through it so we can skip the header if needed
             for linecount, line in enumerate(input_file):
                 # if the tool is the cluster density plot, skip the first 7 rows as these are headers
@@ -352,8 +351,7 @@ class TrendAnalysis(object):
         return self.populate_html_template(config.tool_settings[tool]["plot_title"], plot_content,
                                            config.tool_settings[tool]["plot_text"], template)
 
-    @staticmethod
-    def populate_html_template(plot_title, plot_image, plot_text, template):
+    def populate_html_template(self, plot_title, plot_image, plot_text, template):
         """
         Populates a html template for a single plot, which can then be added to the larger template
             :param plot_title: (str) String to put at top of section
@@ -637,7 +635,8 @@ def main():
                               images_folder=config.dev_images_folder, runtype=runtype,
                               template_dir=config.dev_template_dir,
                               archive_folder=config.dev_archive_folder)
-            t.call_tools()
+            methods = inspect.getmembers(t, predicate=inspect.ismethod)
+            t.call_tools(methods)
             e = Emails(input_folder=config.dev_input_folder, runtype=runtype, wes_email=config.dev_recipient,
                        oncology_ops_email=config.dev_recipient, custom_panels_email=config.dev_recipient,
                        email_subject=config.dev_email_subject, email_message=config.email_message,
