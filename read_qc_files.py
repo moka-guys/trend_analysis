@@ -33,6 +33,25 @@ def arg_parse():
                                                  " reports aren't overwritten during development and testing)")
     return parser.parse_args()
 
+def get_inputs(args):
+    """
+    Sets inputs using the config file and supplied command line arguments - production if no arguments supplied,
+    development if --dev is supplied.
+        :param args:    (Namespace object) parsed command line attributes
+        :return:        (OrderedDict) Dictionary with config setting name as key and setting as value
+
+    Imports general config dictionary from config file, and then production or development dictionary dependent
+    on whether the script is run in production or development mode.
+    """
+    inputs = config.general_config['general']
+    if args.dev:
+        inputs.update(config.general_config['development'])
+        copyfile(src=config.general_config["production"]["index_file"],
+                 dst=inputs["index_file"])
+    else:
+        inputs.update(config.general_config['production'])
+    return inputs
+
 class TrendReport(object):
     """
     A class to create a trend report.
@@ -47,9 +66,13 @@ class TrendReport(object):
         runtype           (str) run type from list of run_types defined in config
         template_dir      (str) path to html templates
         archive_folder    (str) path to archived html reports
+        logopath          (str) path to viapath logo
+        plot_order        (str) Order of plots in report (top to bottom). Only plots in this list are included
+        wkhtmltopdf_path  (str) Path to html conversion utility
    """
 
-    def __init__(self, input_folder, output_folder, images_folder, runtype, template_dir, archive_folder):
+    def __init__(self, input_folder, output_folder, images_folder, runtype, template_dir, archive_folder, logopath,
+                 plot_order, wkhtmltopdf_path):
         """
         The constructor for TrendReport class
         """
@@ -61,13 +84,16 @@ class TrendReport(object):
         self.images_folder = images_folder
         self.template_dir = template_dir
         self.archive_folder = archive_folder
+        self.logopath = logopath
+        self.plot_order = plot_order
+        self.wkhtmltopdf_path = wkhtmltopdf_path
 
     def call_tools(self, methods):
         """
-        Function to call the tools in the class.
+        Function to call the methods in the class required for report generation.
             :param methods: (list) Members of the TrendReport class
 
-        Loops through the list of tools in config.plot_order, and for each:
+        Loops through the list of tools in plot_order, and for each:
             If the tool is applicable to the runtype (specified in per tool config dictionary - tool_settings):
                 Print tool and run type.
             From list of parsed available modules in the class, if module defined by function property in tool config:
@@ -80,7 +106,7 @@ class TrendReport(object):
                 self.plots_html (list of plots html for this tool)
         After looping through all tools, generate a report and add report to the archived reports page.
         """
-        for tool in config.plot_order:
+        for tool in self.plot_order:
             if config.tool_settings[tool][self.runtype]:
                 print tool, self.runtype
                 for name, obj in methods:
@@ -258,7 +284,7 @@ class TrendReport(object):
         generated_report_path = os.path.join(self.output_folder, self.runtype + "_trend_report.html")
         # self.plots_html (list of per-plot html sections) is joined into a single string, spaced with newline
         place_holder_values = {"reports": config.body_template.format("\n".join(self.plots_html)),
-                                "logo_path": config.logopath,
+                                "logo_path": self.logopath,
                                 "timestamp": datetime.datetime.now().strftime('%d-%B-%Y %H:%M'),
                                 "app_version": git_tag()}
         with open(generated_report_path, "wb") as html_file:
@@ -266,7 +292,7 @@ class TrendReport(object):
         # specify pdfkit options to turn off standard out and also allow access to the images
         # pdfkit needs the path tp wkhtmltopdf binary file - defined in config
         pdfkit_options = {'enable-local-file-access': None, "quiet": ''}
-        pdfkit_config = pdfkit.configuration(wkhtmltopdf=config.wkhtmltopdf_path)
+        pdfkit_config = pdfkit.configuration(wkhtmltopdf=self.wkhtmltopdf_path)
         pdfkit.from_file(generated_report_path, os.path.join(self.archive_folder, str(
                         datetime.datetime.now().strftime('%y%m%d_%H_%M')) + "_" + self.runtype + "_trend_report.pdf"),
                         configuration=pdfkit_config, options=pdfkit_options)
@@ -350,90 +376,68 @@ class TrendReport(object):
 
     def return_columns(self, file_path, tool):
         """
-        For a given file, open and for each line (excluding header if required) extract the column of interest as a float.
-        If the tool is the cluster density plot, skips the first seven rows as these are headers.
-        For all other plots, skips the first row as this is the header.
-        Create and return a list of all measurements
+        Extracts data as a list from a column of interest in a file.
             :param file_path:   (str) file to parse
             :param tool:        (str) tool name - allows access to tool specific config settings
             :return to_return:  (list) a list of measurements from the column of interest
+
+        Open the file and select the index of the column of interest using return_column_index
+        Skip the header line if present
+        Then for each remaining line, split the line, pull out the column of interest and add to a list.
+        If and else statements deal with different formats of different input files.
         """
-        # list for sample specific measurements
         to_return = []
-        # open file
         with open(file_path, 'r') as input_file:
-            # select column index of interest
             column_index = self.return_column_index(input_file, tool)
-            # enumerate the list of lines as loop through it so we can skip the header if needed
             for linecount, line in enumerate(input_file):
-                # if the tool is the cluster density plot, skip the first 7 rows as these are headers
                 if config.tool_settings[tool]["input_file"] == "illumina_lane_metrics":
+                    # skip the first 7 rows as these are headers
                     if config.tool_settings[tool]["header_present"] and 0 <= linecount <= 6:
                         pass
                     else:
-                        # ignore blank lines, split the line, pull out column of interest, divide by 1000, add to list
+                        # skips blank lines
                         if not line.isspace():
+                            # illumina lane metrics require division by 1000 to give the cluster density
                             measurement = float(line.split("\t")[column_index]) / 1000
                             to_return.append(measurement)
-                # for all other tool types
                 else:
-                    # skip header row
                     if config.tool_settings[tool]["header_present"] and linecount == 0:
                         pass
                     else:
                         # exclude negative control stats from the "properly_paired" and "pct_off_amplicon" plots
                         if (config.tool_settings[tool]["input_file"] in ["multiqc_picard_pcrmetrics.txt",
-                                                                         "multiqc_samtools_flagstat.txt"]) and (
-                                "NTCcon" in line):
+                            "multiqc_samtools_flagstat.txt"]) and ("NTCcon" in line):
                             pass
-                        # for all other rows that aren't header rows, split line, pull out column of interest, add to list
                         elif config.tool_settings[tool]["conversion_to_percent"]:
                             measurement = float(line.split("\t")[column_index]) * 100
                             to_return.append(measurement)
                         elif config.tool_settings[tool]["plot_type"] == "stacked_bar":
                             measurement = line.split("\t")[column_index]
-                            # do not include blank space
+                            # do not include blank space, as not every line contains sex check data
                             if measurement is not "":
                                 to_return.append(measurement)
                         else:
                             measurement = float(line.split("\t")[column_index])
                             to_return.append(measurement)
-        # return list
         return to_return
 
 
 class Emails(object):
     """
-    A class to handle email sending and logs. Determines new runs, sends emails and creates logfiles.
+    A class to handle email sending and logs. Determines new runs, sends emails and creates logfiles
 
-    Attributes
-    __________
-    input_folder : str
-        path to multiqc data per run
-    runtype : str
-        required as provides one of the elements of the saved plot image name
-    wes_email : str
-        recipient for completed WES trend analysis email alerts
-    oncology_ops_email : str
-        recipient for completed SWIFT trend analysis email alerts
-    custom_panels_email : str
-        recipient for completed custom panels trend analysis email alerts
-    mokaguys_email : str
-        mokaguys email address
-    logfile_path : str
-        Path to email logfile
-
-    Methods
-    _______
-    call_tools(self):
-        Calls the methods required for email sending.
-    determine_new_runs(self, run_list):
-        Checks whether runs for that runtype have previously been analysed/email sent by checking the logfiles.
-    check_sent(self, run_list):
-        Check whether runs for runtype have previously been analysed/emails sent by checking logfiles.
+    Attributes:
+        input_folder        (str) path to MultiQC data per run
+        runtype             (str) used to determine who to send the email alerts to
+        wes_email           (str) recipient for completed WES trend analysis email alerts
+        oncology_ops_email  (str) recipient for completed SWIFT trend analysis email alerts
+        custom_panels_email (str) recipient for completed custom panels trend analysis email alerts
+        email_subject       (str) email subject, with placeholders for inserting per-run inforamtion
+        email_message       (str) email body, with placeholders for inserting per-run information
+        hyperlink           (str) link to MultiQC reports
     """
 
-    def __init__(self, input_folder, runtype, wes_email, oncology_ops_email, custom_panels_email,
+    def __init__(self, input_folder, runtype, wes_email, oncology_ops_email, custom_panels_email, mokaguys_email,
                  email_subject, email_message, hyperlink):
         self.input_folder = input_folder
         self.runtype = runtype
@@ -441,7 +445,7 @@ class Emails(object):
         self.oncology_ops_email = oncology_ops_email
         self.custom_panels_email = custom_panels_email
         self.email_subject = email_subject
-        self.mokaguys_email = config.mokaguys_email
+        self.mokaguys_email = mokaguys_email
         self.logfile_path = os.path.join(self.input_folder + '/{}/email_logfile')
         self.email_file = "email_logfile"
         self.email_message = email_message
@@ -449,30 +453,35 @@ class Emails(object):
 
     def call_tools(self):
         """
-        Call methods required for email sending.
+        Function to call the methods in the class required for email sending
+
+        Creates a runlist for all runs of the runtype, checks whether these are new and not yet included in the trend
+        reports.
+        If the run is new, sends a trend report alert email to the relevant team, and creates a logfile in the
+        runfolder to record the email sending.
         """
-        # create runlist for all runs of the runtype
         run_list = sorted_runs(os.listdir(self.input_folder), self.runtype)
-        # check whether any of these runs are new and not yet included in the trend reports
         new_runs = self.check_sent(run_list)
         if new_runs:
-            # send new trend report alert email to relevant team
             self.send_email(new_runs)
-            # create logfile in runfolder denoting mail has been sent
             self.create_email_logfile(new_runs)
 
     def check_sent(self, run_list):
         """
-        Checks whether runs for that runtype have previously been analysed/email sent by checking the logfiles.
+        Checks whether runs for that runtype have previously been analysed and email sent by checking the logfiles
+        (presence of logfile, and logfile containing string 'email sent')
             :param run_list: (list) List of run folders to be included in trend analysis
             :return new_runs: (list) list of runs that have not yet been analysed
+
+        If the logfile is present in the runfolder, and contains a string containing "email sent", pass. If not,
+        append it to the new run list.
         """
         new_runs = []
         for run in run_list:
             run_folder = os.path.join(self.input_folder + '/' + run)
-            # if the run has previously been analysed (logfile present and 'Email sent' logged)
-            if find_file_path(self.email_file, run_folder) and \
-                    open(find_file_path(self.email_file, run_folder), "r").read():
+            # pass if the run has previously been analysed (logfile present and 'Email sent' logged)
+            if find_file_path(self.email_file, run_folder) and ("email sent" in
+                    open(find_file_path(self.email_file, run_folder), "r").read()):
                 pass
             else:
                 # run has not been analysed so append to new_runs list
@@ -481,15 +490,15 @@ class Emails(object):
 
     def send_email(self, new_runs):
         """
-        Sends email per runtype for runtypes with newly analysed runs to notify users of new trend report.
-        Uses smtplib.
+        Uses smtplib to send an email per runtype for newly analysed runs to notify users of new trend report.
             :param new_runs: (list) list of runs that have not yet been analysed
+
+        Sets recipients based on the runtype. Creates a message object, sets email priority, subject, recipients, sender
+        and body. Then sends the email.
         """
-        # set email message and recipients
-        place_holder_values = {
-            "run_list": "\n".join(new_runs),
-            "hyperlink": self.hyperlink,
-            "version": git_tag()}
+        place_holder_values = {"run_list": "\n".join(new_runs),
+                                "hyperlink": self.hyperlink,
+                                "version": git_tag()}
         message_body = self.email_message.format(**place_holder_values)
 
         if self.runtype == "WES":
@@ -499,29 +508,27 @@ class Emails(object):
         if self.runtype == "SWIFT":
             recipients = [self.oncology_ops_email, self.mokaguys_email]
 
-        # create message object, set priority, subject, recipients, sender and body
         m = Message()
         m["X-Priority"] = str("3")
         m["Subject"] = self.email_subject.format(place_holder_values["run_list"])
         m['To'] = ", ".join(recipients)
-        m['From'] = config.moka_alerts_email
+        m['From'] = config.sender
         m.set_payload(message_body)
 
-        # server details
         server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
         server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
         server.starttls()
         server.ehlo()
         server.login(config.user, config.pw)
-        server.sendmail(config.moka_alerts_email, recipients, m.as_string())
+        server.sendmail(config.sender, recipients, m.as_string())
         return
 
     def create_email_logfile(self, new_runs):
         """
-        Creates a logfile to record that the run has been analysed and a notification email sent to the relevant team.
-        :param new_runs: (list) list of runs that have not yet been analysed
+        Creates a logfile per new run to record that it has been analysed and that a notification email has been sent
+        to the relevant team.
+            :param new_runs: (list) list of runs that have not yet been analysed
         """
-        # for run in new_runs:
         for run in new_runs:
             logfile_path = self.logfile_path.format(run)
             with open(logfile_path, "w") as logfile_path:
@@ -532,19 +539,20 @@ class Emails(object):
 
 def sorted_runs(run_list, runtype):
     """
-    The runs should be plotted in date order, oldest to newest.
-    The runs included in the analysis are saved in run specific folders, named with the runfolder name (002_YYMMDD_[*WES*,*NGS*,*ONC*])
-    Extract the date of the run from the folder name and create an ordered list
-        :param run_list: (list) List of run folders to be included in trend analysis
-        :param runtype: (str) runtypes specified in config, to filter available runs
-        :return (list) list of most recent runfolder names, in date ascending order (oldest first)
+    Takes a list of runfolders (each run is saved in a runfolder - 002_YYMMDD_[*WES*,*NGS*,*ONC*]) and filters out the
+    runs of correct run type, then puts them in date order (oldest to newest).
+        :param run_list:    (list) List of run folders to be included in trend analysis
+        :param runtype:     (str) runtypes specified in config, to filter available runs
+        :return             (list) returns the x most recent runfolder names (x is defined in the config),
+                                in date ascending order (oldest first)
+
+    Uses the runtype and identifiers in the runfolder names to filter runs of the correct run type, adding them to the
+    dictionary with date as the key and name as the value.
+    The dictionary is then sorted by key (dates) into ascending order (oldest first), creating an ordered list.
+    Return the x most recent runs (x is defined in config)
     """
     dates = {}
-    # for run in folder
     for run in run_list:
-        # need to filter for only runs of this runtype, and only runs with non-empty runfolders
-        # if run of interest, extract the date and add this as a key to the  dict
-        # add run name as the value
         if runtype == "WES" and "WES" in run:
             dates[(int(run.split("_")[1]))] = run
         if runtype == "PANEL" and "NGS" in run and "WES" not in run:
@@ -562,23 +570,20 @@ def sorted_runs(run_list, runtype):
         if runtype == "NOVASEQ_PIKACHU" and "A01229" in run:
             dates[(int(run.split("_")[1]))] = run
 
-    # sort the list of dates, identify the full run name and append to sorted list
     sortedruns = []
     # if there are 2 runs on same day, both runs will be added for each date so use set()
-    # sort the list of dictionary keys (dates) in ascending order (oldest first)
     for date in sorted(set(dates)):
         sortedruns.append(dates[date])
-    # return the x most recent runs (x is defined in config)
-    return sortedruns[-config.number_of_runs_to_include:]
+    return sortedruns[-config.general_config["general"]["number_of_runs_to_include"]:]
 
 
 def find_file_path(name, path):
     """
-    Use os.walk to recursively search through all files in a folder
-    Return the path to identified file
-        :param name: (str) filename
-        :param path: (str) path to the folder containing all QC files for that run
-        :return: (str) path to file of interest. Only returned if the file exists for that run.
+    Use os.walk to recursively search through all files in a folder and return path to identified. If not present,
+    print a message.
+        :param name:    (str) filename
+        :param path:    (str) path to the folder containing all QC files for that run
+        :return:        (str) path to file of interest. Only returned if the file exists for that run.
     """
     for root, dirs, files in os.walk(path):
         for filename in files:
@@ -592,13 +597,16 @@ def git_tag():
     """
     Reads the script release version number directly from the repository
         :return: (str) returns version number of current script release
+
+    Sets the command that prints git tags for the folder containing the script that is being executed
+    (e.g. v22-3-gccfd).
+    This command is then executed using subprocess - this gets teh tag and then uses awk to create an array "a",
+    splitting on "-", and prints the first element of the array.
     """
-    #  set the command which prints the git tags for the folder containing the script that is being executed.
-    #  The tag looks like "v22-3-gccfd" so needs to be parsed.
-    #  Use awk to create an array "a", splitting on "-". The print the first element of the array
-    cmd = "git -C " + os.path.dirname(
-        os.path.realpath(__file__)) + " describe --tags | awk '{split($0,a,\"-\"); print a[1]}'"
+    cmd = "git -C " + os.path.dirname(os.path.realpath(__file__)) + \
+          " describe --tags | awk '{split($0,a,\"-\"); print a[1]}'"
     #  use subprocess to execute command
+
     proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     out, err = proc.communicate()
     #  return standard out, removing any new line characters
@@ -607,79 +615,45 @@ def git_tag():
 
 def check_for_update():
     """
-    Look to see if the index.html, which contains the links to multiqc reports has been modified in the last hour
+    Look to see if the index.html, which contains the links to multiqc reports has been modified in the last hour.
     If it has, return true, if not return false.
         :return: (bool) returns a Boolean value true or false
+
+    Gets datetime that the index.html file was last modified. If the date modified is more recent than the frequency
+    that the script is run (using now - timedelta), a multiqc report has been added and we need to run the script.
     """
     # see when the index.html file was last modified
     index_last_modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(config.index_file))
-    # if the date modified is more than the frequency the script is run (using now - timedelta) a multiqc report has been added and we need to run the script.
     if index_last_modified >= datetime.datetime.now() - datetime.timedelta(hours=config.run_frequency):
         return True
     else:
-        # print "index not modified since script run last"
         return False
 
-
 def main():
+    # parse command line arguments
     args = arg_parse()
-    # set variables from config file, depending on whether run is development or production
-    if args.dev:
-        # if script run in development mode
-        input_folder = config.dev_input_folder
-        output_folder = config.dev_output_folder
-        images_folder = config.dev_images_folder
-        template_dir = config.dev_template_dir
-        archive_folder = config.dev_archive_folder
-        wes_email = config.dev_recipient
-        oncology_ops_email = config.dev_recipient
-        custom_panels_email = config.dev_recipient
-        email_subject = config.dev_email_subject
-        email_message = config.email_message
-        hyperlink = config.dev_reports_link
-        # copies current index file over from live environment
-        copyfile(src=config.index_file, dst=config.dev_index_file)
+    # get class inputs from config file
+    inputs = get_inputs(args)
 
-        # create instance of TrendReport class, retrieve methods of TrendReport class
-        # then call member function of TrendReport instance
-        for runtype in config.run_types:
-            # create instance of TrendReport class
-            t = TrendReport(input_folder, output_folder, images_folder, runtype, template_dir, archive_folder)
-            # retrieve methods of the TrendReport class
+    # If run in development mode, or if run in production mode AND a run has been uploaded since the script was last run
+    # create instance of TrendReport class, retrieve methods of TrendReport class
+    # then call call_tools (member function of TrendReport instance) to generate the trend report
+    # create instance of Emails class, then call call_tools (member function of Emails instance) to send emails
+    if args.dev or check_for_update():
+        for runtype in inputs["run_types"]:
+            t = TrendReport(input_folder = inputs["input_folder"], output_folder = inputs["output_folder"],
+                            images_folder = inputs["images_folder"], runtype = runtype,
+                            template_dir = inputs["template_dir"], archive_folder = inputs["archive_folder"],
+                            logopath = inputs["logopath"], plot_order = inputs["plot_order"],
+                            wkhtmltopdf_path = inputs["wkhtmltopdf_path"])
             methods = inspect.getmembers(t, predicate=inspect.ismethod)
             t.call_tools(methods)
-            # create instance of Emails class
-            e = Emails(input_folder, runtype, wes_email, oncology_ops_email, custom_panels_email, email_subject,
-                           email_message,
-                           hyperlink)
+            e = Emails(input_folder = inputs["input_folder"], runtype = runtype, wes_email = inputs["wes_email"],
+                       oncology_ops_email = inputs["oncology_ops_email"],
+                       custom_panels_email = inputs["custom_panels_email"], mokaguys_email = inputs["mokaguys_email"],
+                       email_subject = inputs["email_subject"], email_message = inputs["email_message"],
+                       hyperlink = inputs["reports_hyperlink"])
             e.call_tools()
-    else:
-        input_folder = config.input_folder
-        output_folder = config.output_folder
-        images_folder = config.images_folder
-        template_dir = config.template_dir
-        archive_folder = config.archive_folder
-        wes_email = config.wes_email
-        oncology_ops_email = config.oncology_ops_email
-        custom_panels_email = config.custom_panels_email
-        email_subject = config.email_subject
-        email_message = config.email_message
-        hyperlink = config.reports_link
-
-        # create instance of TrendReport class, retrieve methods of TrendReport class
-        # then call member function of TrendReport instance
-        if check_for_update():
-            for runtype in config.run_types:
-                # create instance of TrendReport class
-                t = TrendReport(input_folder, output_folder, images_folder, runtype, template_dir, archive_folder)
-                # retrieve methods of the TrendReport class
-                methods = inspect.getmembers(t, predicate=inspect.ismethod)
-                t.call_tools(methods)
-                # create instance of Emails class
-                e = Emails(input_folder, runtype, wes_email, oncology_ops_email, custom_panels_email, email_subject,
-                           email_message,
-                           hyperlink)
-                e.call_tools()
 
 if __name__ == '__main__':
     main()

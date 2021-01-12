@@ -1,13 +1,9 @@
 import os
 
-# ==== Runs =================================================================================
-# Frequency (hours) the script runs (via cron)
-# Defines window within which index.html file must fall to trigger a new trend analysis
-run_frequency = 2
-number_of_runs_to_include = 5
-
-# ==== Email credentials location ===========================================================
+# ==== EMAIL CREDENTIALS LOCATION ===========================================================
 # Root folder containing app directories and email credentials (2 levels up from this file)
+# This sets the user and the password to be used in the script
+
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 username_file_path = "{document_root}/.amazon_email_username".format(document_root=document_root)
 
@@ -17,63 +13,94 @@ pw_file = "{document_root}/.amazon_email_pw".format(document_root=document_root)
 with open(pw_file, "r") as email_password_file:
     pw = email_password_file.readline().rstrip()
 
-# ==== Email server settings =================================================================
-mokaguys_email = "gst-tr.mokaguys@nhs.net"
-host = "email-smtp.eu-west-1.amazonaws.com"
-port = 587
-moka_alerts_email = "moka.alerts@gstt.nhs.uk"
-smtp_do_tls = True
-wes_email = "gst-tr.wesviapath@nhs.net"
-oncology_ops_email = "m.neat@nhs.net"
-custom_panels_email = ""
-email_subject = "MOKAPIPE ALERT : Finished pipeline for {} - MultiQC report available and trend analysis updated"
-email_message = """
-        The MultiQC report is available for: 
-        {}       
-         
-        Trend analysis report has been updated to include these runs. Available at {}.
-        
-        Sent using trend_analysis {} 
-        """
-reports_link = "https://genomics.viapath.co.uk/mokaguys/multiqc/"
+# ==== GENERAL CONFIG SETTINGS ================================================================
 
-# ==== Folder paths ==========================================================================
-index_file = "/var/www/html/mokaguys/multiqc/index.html"
-input_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data"
-output_folder = "/var/www/html/mokaguys/multiqc/trend_analysis"
-images_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/images/"
-logopath = "images/viapathlogo.png"
-template_dir = "/usr/local/src/mokaguys/apps/trend_analysis/html_template"
-archive_folder = "/var/www/html/mokaguys/multiqc/trend_analysis/archive"
+# Contains general, production and development config settings
+# General settings are those that are applicable when running the script in production and development
+# Production settings are those that are only used when the script is run in production
+# Development settings are those that are only used when the script is run during development
+# Separate development and production settings ensure that the live MultiQC reports are not
+# inadvertently updated during development work.
 
-# ==== Path to html conversion utility =======================================================
-wkhtmltopdf_path = "/usr/local/bin/wkhtmltopdf"
+#General ---------------------------------------------------------------------------------------
+# run_frequency:               Frequency (hours) the script runs (via cron). Defines window within which index.html
+#                              File must fall to trigger a new trend analysis
+# number_of_runs_to_include:   The x most recent runs
+# run_types:                   Panels and individual sequencers
+# wkhtmltopdf_path:            Path to html conversion utility
+# plot_order:                  Order of plots in report (top to bottom). Only plots in this list are included
+# logopath:                    Path to viapath logo
+# mokaguys_email:              General bioinformatics email, which receives all sent out emails
+# host:                        The host running the SMTP server
+# port:                        Port, where SMTP server is listening
+# sender:                      Address emails are sent from
+# email_message:               Email body (for both dev and prod), with placeholders for inserting per-run information
 
-# ==== Run types =============================================================================
-# Panels and individual sequencers
-run_types = ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC", "MISEQ_DNA", "NOVASEQ_PIKACHU"]
+#Production/development -------------------------------------------------------------------------
+# index_file:                  Path to the index.html file (used for the main trend analysis homepage)
+# input_folder:                Path to directory containing individual run folders (these contain per-run mutliqc files)
+# output_folder:               Path to save location for html trend reports and archive_index.html
+# images_folder:               Path to viapath logo and plot save location
+# template_dir:                Path to html templates
+# archive_folder:              Path to archived html reports
+# reports_hyperlink:           Link to the trend analysis homepage from which the MultiQC reports can be accessed.
+# wes_email:                   Recipient for completed WES trend analysis email alerts
+# oncology_ops_email:          Recipient for completed SWIFT trend analysis email alerts
+# custom_panels_email:         Recipient for completed custom panels trend analysis email alerts
+# recipient:                   Recipient for emails sent out when testing during development. The mokaguys email address
+# email_subject:               Email subject, with placeholders for inserting per-run inforamtion
 
-# ==== Plot order ============================================================================
-# Order of plots in report (top to bottom). Only plots in this list are included
-plot_order = ["run_names", "q30_percent", "picard_insertsize", "on_target_vs_selected", "target_bases_at_20X",
-              "target_bases_at_30X", "cluster_density_MiSeq", "cluster_density_NextSeq", "contamination",
-              "properly_paired", "pct_off_amplicon", "fastq_total_sequences", "peddy_sex_check"]
+general_config = {"general": {"run_frequency": 2,
+                              "number_of_runs_to_include": 5,
+                              "run_types": ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC",
+                                            "MISEQ_DNA", "NOVASEQ_PIKACHU"],
+                              "wkhtmltopdf_path": "/usr/local/bin/wkhtmltopdf",
+                              "plot_order": ["run_names", "q30_percent", "picard_insertsize", "on_target_vs_selected",
+                                             "target_bases_at_20X", "target_bases_at_30X", "cluster_density_MiSeq",
+                                             "cluster_density_NextSeq", "contamination", "properly_paired",
+                                             "pct_off_amplicon", "fastq_total_sequences", "peddy_sex_check"],
+                              "logopath": "images/viapathlogo.png",
+                              "mokaguys_email": "gst-tr.mokaguys@nhs.net",
+                              "host": "email-smtp.eu-west-1.amazonaws.com",
+                              "port": 587,
+                              "sender": "moka.alerts@gstt.nhs.uk",
+                              "email_message" : """
+                                                The MultiQC report is available for: 
+                                                {run_list}       
 
-# ==== Development-run-specific settings =====================================================
-# Dev email server settings
-dev_recipient = "gst-tr.mokaguys@nhs.net"
-dev_email_subject = "TREND ANALYSIS TEST: Finished pipeline for {} - MultiQC report available and trend analysis updated"
-dev_reports_link = "https://genomics.viapath.co.uk/mokaguys/dev/multiqc/"
+                                                Trend analysis report has been updated to include these runs. Available at {hyperlink}.
 
-# Dev folder paths
-dev_input_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/test_multiqc_data"
-dev_output_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis"
-dev_images_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/images/"
-dev_index_file = "/var/www/html/mokaguys/dev/multiqc/index.html"
-dev_template_dir = "/usr/local/src/mokaguys/development_area/trend_analysis/html_template"
-dev_archive_folder = "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive"
+                                                Sent using trend_analysis {version} 
+                                                """
+                              },
+              "production": {"index_file": "/var/www/html/mokaguys/multiqc/index.html",
+                             "input_folder": "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data",
+                             "output_folder": "/var/www/html/mokaguys/multiqc/trend_analysis",
+                             "images_folder": "/var/www/html/mokaguys/multiqc/trend_analysis/images/",
+                             "template_dir": "/usr/local/src/mokaguys/apps/trend_analysis/html_template",
+                             "archive_folder": "/var/www/html/mokaguys/multiqc/trend_analysis/archive",
+                             "reports_hyperlink": "https://genomics.viapath.co.uk/mokaguys/multiqc/",
+                             "wes_email": "gst-tr.wesviapath@nhs.net",
+                             "oncology_ops_email": "m.neat@nhs.net",
+                             "custom_panels_email": "",
+                             "email_subject": "MOKAPIPE ALERT : Finished pipeline for {} - MultiQC report available and trend analysis updated"
+                             },
+              "development": {"index_file": "/var/www/html/mokaguys/dev/multiqc/index.html",
+                              "input_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/test_multiqc_data",
+                              "output_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis",
+                              "images_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/images/",
+                              "template_dir": "/usr/local/src/mokaguys/development_area/trend_analysis/html_template",
+                              "archive_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive",
+                              "reports_hyperlink": "https://genomics.viapath.co.uk/mokaguys/dev/multiqc/",
+                              "wes_email": "gst-tr.mokaguys@nhs.net",
+                              "oncology_ops_email": "gst-tr.mokaguys@nhs.net",
+                              "custom_panels_email": "gst-tr.mokaguys@nhs.net",
+                              "email_subject": "TREND ANALYSIS TEST: Finished pipeline for {} - MultiQC report available and trend analysis updated"
+                               }
+                  }
 
-# ==== Tool-Specific settings ================================================================
+# ==== TOOL-SPECIFIC SETTINGS ================================================================
+
 tool_settings = {
     "run_names": {
         "function": "describe_run_names",
