@@ -22,7 +22,7 @@ with open(pw_file, "r") as email_password_file:
 # Separate development and production settings ensure that the live MultiQC reports are not
 # inadvertently updated during development work.
 
-#General ---------------------------------------------------------------------------------------
+# General ---------------------------------------------------------------------------------------
 # run_frequency:               Frequency (hours) the script runs (via cron). Defines window within which index.html
 #                              File must fall to trigger a new trend analysis
 # number_of_runs_to_include:   The x most recent runs
@@ -36,7 +36,7 @@ with open(pw_file, "r") as email_password_file:
 # sender:                      Address emails are sent from
 # email_message:               Email body (for both dev and prod), with placeholders for inserting per-run information
 
-#Production/development -------------------------------------------------------------------------
+# Production/development -------------------------------------------------------------------------
 # index_file:                  Path to the index.html file (used for the main trend analysis homepage)
 # input_folder:                Path to directory containing individual run folders (these contain per-run mutliqc files)
 # output_folder:               Path to save location for html trend reports and archive_index.html
@@ -64,7 +64,7 @@ general_config = {"general": {"run_frequency": 2,
                               "host": "email-smtp.eu-west-1.amazonaws.com",
                               "port": 587,
                               "sender": "moka.alerts@gstt.nhs.uk",
-                              "email_message" : """
+                              "email_message": """
                                                 The MultiQC report is available for: 
                                                 {run_list}       
 
@@ -73,30 +73,30 @@ general_config = {"general": {"run_frequency": 2,
                                                 Sent using trend_analysis {version} 
                                                 """
                               },
-              "production": {"index_file": "/var/www/html/mokaguys/multiqc/index.html",
-                             "input_folder": "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data",
-                             "output_folder": "/var/www/html/mokaguys/multiqc/trend_analysis",
-                             "images_folder": "/var/www/html/mokaguys/multiqc/trend_analysis/images/",
-                             "template_dir": "/usr/local/src/mokaguys/apps/trend_analysis/html_template",
-                             "archive_folder": "/var/www/html/mokaguys/multiqc/trend_analysis/archive",
-                             "reports_hyperlink": "https://genomics.viapath.co.uk/mokaguys/multiqc/",
-                             "wes_email": "gst-tr.wesviapath@nhs.net",
-                             "oncology_ops_email": "m.neat@nhs.net",
-                             "custom_panels_email": "",
-                             "email_subject": "MOKAPIPE ALERT : Finished pipeline for {} - MultiQC report available and trend analysis updated"
-                             },
-              "development": {"index_file": "/var/www/html/mokaguys/dev/multiqc/index.html",
-                              "input_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/test_multiqc_data",
-                              "output_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis",
-                              "images_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/images/",
-                              "template_dir": "/usr/local/src/mokaguys/development_area/trend_analysis/html_template",
-                              "archive_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive",
-                              "reports_hyperlink": "https://genomics.viapath.co.uk/mokaguys/dev/multiqc/",
-                              "wes_email": "gst-tr.mokaguys@nhs.net",
-                              "oncology_ops_email": "gst-tr.mokaguys@nhs.net",
-                              "custom_panels_email": "gst-tr.mokaguys@nhs.net",
-                              "email_subject": "TREND ANALYSIS TEST: Finished pipeline for {} - MultiQC report available and trend analysis updated"
-                               }
+                  "production": {"index_file": "/var/www/html/mokaguys/multiqc/index.html",
+                                 "input_folder": "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data",
+                                 "output_folder": "/var/www/html/mokaguys/multiqc/trend_analysis",
+                                 "images_folder": "/var/www/html/mokaguys/multiqc/trend_analysis/images/",
+                                 "template_dir": "/usr/local/src/mokaguys/apps/trend_analysis/html_template",
+                                 "archive_folder": "/var/www/html/mokaguys/multiqc/trend_analysis/archive",
+                                 "reports_hyperlink": "https://genomics.viapath.co.uk/mokaguys/multiqc/",
+                                 "wes_email": "gst-tr.wesviapath@nhs.net",
+                                 "oncology_ops_email": "m.neat@nhs.net",
+                                 "custom_panels_email": "",
+                                 "email_subject": "MOKAPIPE ALERT : Finished pipeline for {} - MultiQC report available and trend analysis updated"
+                                 },
+                  "development": {"index_file": "/var/www/html/mokaguys/dev/multiqc/index.html",
+                                  "input_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/test_multiqc_data",
+                                  "output_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis",
+                                  "images_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/images/",
+                                  "template_dir": "/usr/local/src/mokaguys/development_area/trend_analysis/html_template",
+                                  "archive_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive",
+                                  "reports_hyperlink": "https://genomics.viapath.co.uk/mokaguys/dev/multiqc/",
+                                  "wes_email": "gst-tr.mokaguys@nhs.net",
+                                  "oncology_ops_email": "gst-tr.mokaguys@nhs.net",
+                                  "custom_panels_email": "gst-tr.mokaguys@nhs.net",
+                                  "email_subject": "TREND ANALYSIS TEST: Finished pipeline for {} - MultiQC report available and trend analysis updated"
+                                  }
                   }
 
 # ==== TOOL-SPECIFIC SETTINGS ================================================================
@@ -431,7 +431,7 @@ tool_settings = {
         "header_present": True,
         "conversion_to_percent": False,
         "plot_title": "Correct Sex",
-        "plot_text": "Number of samples with incorrect sex per run",
+        "plot_text": "Number of sample names with incorrect sex per run. The output is 'True' if the sex encoded in the sample name matches that predicted by peddy. It is 'False' if it does not match the prediction. e.g. sample name sex 'unknown' and peddy prediction 'male' would be 'False'.",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
