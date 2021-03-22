@@ -109,7 +109,7 @@ class TrendReport(object):
         After looping through all tools, generate a report and add report to the archived reports page.
         """
         for tool in self.plot_order:
-            if config.tool_settings[tool][self.runtype]:
+            if config.tool_settings[tool]["report_type"][self.runtype]:
                 print('{} {}'.format(tool, self.runtype))
                 for name, obj in methods:
                     if config.tool_settings[tool]["function"] in name:
@@ -355,13 +355,14 @@ class TrendReport(object):
         input_file_name = config.tool_settings[tool]["input_file"]
         tool_dict = OrderedDict({})
         sorted_run_list = sorted_runs(os.listdir(self.input_folder), self.runtype)
-        # for each run find the file and pass it to return_columns, which generates a list
+        # for each run, check the run is from the correct sequencer for the plot
+        # then find the file and pass it to return_columns, which generates a list
         # add this to the dictionary
         for run in sorted_run_list:
-            input_file = find_file_path(input_file_name, os.path.join(self.input_folder, run))
-            # input_file = select_input_file(input_file_name, input_folder, run, tool)
-            if input_file:
-                tool_dict[run] = self.return_columns(input_file, tool)
+            if any(sequencer in run for sequencer in config.tool_settings[tool]["report_type"][self.runtype].split(',')):
+                input_file = find_file_path(input_file_name, os.path.join(self.input_folder, run))
+                if input_file:
+                    tool_dict[run] = self.return_columns(input_file, tool)
         return tool_dict
 
     def return_column_index(self, input_file, tool):
