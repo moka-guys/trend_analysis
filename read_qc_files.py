@@ -1,5 +1,4 @@
 import matplotlib
-
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import subprocess
@@ -30,8 +29,10 @@ def arg_parse():
     parser = argparse.ArgumentParser()
     # defines command line arguments
     parser.add_argument('-d', '--dev', action='store_true', help="uses development output file locations (ensures live"
-                                                 " reports aren't overwritten during development and testing)")
+                                                                 "reports aren't overwritten during development and "
+                                                                 "testing)")
     return parser.parse_args()
+
 
 def get_inputs(args):
     """
@@ -51,6 +52,7 @@ def get_inputs(args):
     else:
         inputs.update(config.general_config['production'])
     return inputs
+
 
 class TrendReport(object):
     """
@@ -108,7 +110,7 @@ class TrendReport(object):
         """
         for tool in self.plot_order:
             if config.tool_settings[tool][self.runtype]:
-                print tool, self.runtype
+                print('{} {}'.format(tool, self.runtype))
                 for name, obj in methods:
                     if config.tool_settings[tool]["function"] in name:
                         self.dictionary[tool] = obj(tool)
@@ -215,7 +217,7 @@ class TrendReport(object):
                 xlabels.append(str(i))
         return xlabels
 
-    def return_image_paths(self,tool):
+    def return_image_paths(self, tool):
         """
         Returns image paths using values defined in the config: images_folder, runtype (e.g. WES), and tool name.
             :param tool:                (str) allows access to tool specific config settings and of dictionary
@@ -253,7 +255,8 @@ class TrendReport(object):
         Depending on required output for the tool (plot or table):
             Load the html template from the config (plot or table template)
             Define the html content as either the table text or the image location
-        Returns the populated template for a single plot (populated with plot title, plot content, plot text and html content).
+        Returns the populated template for a single plot (populated with plot title, plot content, plot text and html
+        content).
         """
         if config.tool_settings[tool]["plot_type"] == "table":
             template = config.table_template
@@ -264,9 +267,8 @@ class TrendReport(object):
             # Makes the browser think the image is dynamic, so reloads it every time the modification date changes
             # Means the new image is used when a new plot is generated, rather than the cached image
             if self.dictionary[tool]["image_location"]:
-                html_content = os.path.join(
-                self.dictionary[tool]["image_location"] + '?" . filemtime(' + self.dictionary[tool][
-                        "image_location"] + ') . "')
+                html_content = os.path.join(self.dictionary[tool]["image_location"] + '?" . filemtime(' +
+                                            self.dictionary[tool]["image_location"] + ') . "')
         return template.format(config.tool_settings[tool]["plot_title"], config.tool_settings[tool]["plot_text"],
                                html_content)
 
@@ -284,9 +286,9 @@ class TrendReport(object):
         generated_report_path = os.path.join(self.output_folder, self.runtype + "_trend_report.html")
         # self.plots_html (list of per-plot html sections) is joined into a single string, spaced with newline
         place_holder_values = {"reports": config.body_template.format("\n".join(self.plots_html)),
-                                "logo_path": self.logopath,
-                                "timestamp": datetime.datetime.now().strftime('%d-%B-%Y %H:%M'),
-                                "app_version": git_tag()}
+                               "logo_path": self.logopath,
+                               "timestamp": datetime.datetime.now().strftime('%d-%B-%Y %H:%M'),
+                               "app_version": git_tag()}
         with open(generated_report_path, "wb") as html_file:
             html_file.write(html_template.render(place_holder_values))
         # specify pdfkit options to turn off standard out and also allow access to the images
@@ -332,7 +334,6 @@ class TrendReport(object):
             else:
                 run_name_dictionary[str(i)] = sorted_run_list[i - 1]
         return run_name_dictionary
-
 
     def parse_multiqc_output(self, tool):
         """
@@ -406,7 +407,8 @@ class TrendReport(object):
                     else:
                         # exclude negative control stats from the "properly_paired" and "pct_off_amplicon" plots
                         if (config.tool_settings[tool]["input_file"] in ["multiqc_picard_pcrmetrics.txt",
-                            "multiqc_samtools_flagstat.txt"]) and ("NTCcon" in line):
+                                                                         "multiqc_samtools_flagstat.txt"]) \
+                                and ("NTCcon" in line):
                             pass
                         elif config.tool_settings[tool]["conversion_to_percent"]:
                             measurement = float(line.split("\t")[column_index]) * 100
@@ -481,7 +483,8 @@ class Emails(object):
             run_folder = os.path.join(self.input_folder + '/' + run)
             # pass if the run has previously been analysed (logfile present and 'Email sent' logged)
             if find_file_path(self.email_file, run_folder) and ("email sent" in
-                    open(find_file_path(self.email_file, run_folder), "r").read()):
+                                                                open(find_file_path(self.email_file, run_folder),
+                                                                     "r").read()):
                 pass
             else:
                 # run has not been analysed so append to new_runs list
@@ -496,9 +499,7 @@ class Emails(object):
         Sets recipients based on the runtype. Creates a message object, sets email priority, subject, recipients, sender
         and body. Then sends the email.
         """
-        place_holder_values = {"run_list": "\n".join(new_runs),
-                                "hyperlink": self.hyperlink,
-                                "version": git_tag()}
+        place_holder_values = {"run_list": "\n".join(new_runs), "hyperlink": self.hyperlink, "version": git_tag()}
         message_body = self.email_message.format(**place_holder_values)
 
         if self.runtype == "WES":
@@ -589,7 +590,7 @@ def find_file_path(name, path):
         for filename in files:
             if name in filename:
                 return os.path.join(root, filename)
-    print "no output named {} for run {}".format(name, path)
+    print("no output named {} for run {}".format(name, path))
     return False
 
 
@@ -629,6 +630,7 @@ def check_for_update():
     else:
         return False
 
+
 def main():
     # parse command line arguments
     args = arg_parse()
@@ -641,19 +643,20 @@ def main():
     # create instance of Emails class, then call call_tools (member function of Emails instance) to send emails
     if args.dev or check_for_update():
         for runtype in inputs["run_types"]:
-            t = TrendReport(input_folder = inputs["input_folder"], output_folder = inputs["output_folder"],
-                            images_folder = inputs["images_folder"], runtype = runtype,
-                            template_dir = inputs["template_dir"], archive_folder = inputs["archive_folder"],
-                            logopath = inputs["logopath"], plot_order = inputs["plot_order"],
-                            wkhtmltopdf_path = inputs["wkhtmltopdf_path"])
+            t = TrendReport(input_folder=inputs["input_folder"], output_folder=inputs["output_folder"],
+                            images_folder=inputs["images_folder"], runtype=runtype,
+                            template_dir=inputs["template_dir"], archive_folder=inputs["archive_folder"],
+                            logopath=inputs["logopath"], plot_order=inputs["plot_order"],
+                            wkhtmltopdf_path=inputs["wkhtmltopdf_path"])
             methods = inspect.getmembers(t, predicate=inspect.ismethod)
             t.call_tools(methods)
-            e = Emails(input_folder = inputs["input_folder"], runtype = runtype, wes_email = inputs["wes_email"],
-                       oncology_ops_email = inputs["oncology_ops_email"],
-                       custom_panels_email = inputs["custom_panels_email"], mokaguys_email = inputs["mokaguys_email"],
-                       email_subject = inputs["email_subject"], email_message = inputs["email_message"],
-                       hyperlink = inputs["reports_hyperlink"])
+            e = Emails(input_folder=inputs["input_folder"], runtype=runtype, wes_email=inputs["wes_email"],
+                       oncology_ops_email=inputs["oncology_ops_email"],
+                       custom_panels_email=inputs["custom_panels_email"], mokaguys_email=inputs["mokaguys_email"],
+                       email_subject=inputs["email_subject"], email_message=inputs["email_message"],
+                       hyperlink=inputs["reports_hyperlink"])
             e.call_tools()
+
 
 if __name__ == '__main__':
     main()
