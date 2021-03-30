@@ -402,6 +402,8 @@ class TrendReport(object):
                             # illumina lane metrics require division by 1000 to give the cluster density
                             measurement = float(line.split("\t")[column_index]) / 1000
                             to_return.append(measurement)
+                elif config.tool_settings[tool] == "fastq_total_sequences":
+                    pass #ADD CODE HERE TO PARSE THE FILE AS DISCUSSED WITH ALED/CALCULATE AS DESCRIBED IN MY NOTES
                 else:
                     if config.tool_settings[tool]["header_present"] and linecount == 0:
                         pass
@@ -570,6 +572,12 @@ def sorted_runs(run_list, runtype):
         if runtype == "MISEQ_DNA" and "M02631" in run:
             dates[(int(run.split("_")[1]))] = run
         if runtype == "NOVASEQ_PIKACHU" and "A01229" in run:
+            dates[(int(run.split("_")[1]))] = run
+        if runtype == "TSO500" and "TSO500" in run:
+            dates[(int(run.split("_")[1]))] = run
+        if runtype == "SNP" and "SNP" in run:
+            dates[(int(run.split("_")[1]))] = run
+        if runtype == "ADX" and "ADX" in run:
             dates[(int(run.split("_")[1]))] = run
 
     sortedruns = []

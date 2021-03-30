@@ -47,13 +47,12 @@ with open(pw_file, "r") as email_password_file:
 # wes_email:                   Recipient for completed WES trend analysis email alerts
 # oncology_ops_email:          Recipient for completed SWIFT trend analysis email alerts
 # custom_panels_email:         Recipient for completed custom panels trend analysis email alerts
-# recipient:                   Recipient for emails sent out when testing during development. The mokaguys email address
 # email_subject:               Email subject, with placeholders for inserting per-run inforamtion
 
 general_config = {"general": {"run_frequency": 2,
                               "number_of_runs_to_include": 5,
                               "run_types": ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC",
-                                            "MISEQ_DNA", "NOVASEQ_PIKACHU"],
+                                            "MISEQ_DNA", "NOVASEQ_PIKACHU", "TSO500", "ADX", "SNP"],
                               "wkhtmltopdf_path": "/usr/local/bin/wkhtmltopdf",
                               "plot_order": ["run_names", "q30_percent", "picard_insertsize", "on_target_vs_selected",
                                              "target_bases_at_20X", "target_bases_at_30X", "cluster_density_MiSeq",
@@ -105,14 +104,44 @@ general_config = {"general": {"run_frequency": 2,
 
 # ==== TOOL-SPECIFIC SETTINGS ================================================================
 
+# Contains config settings per plot (run_names, picard_insertsize, q30_percent, target_bases_at_30X,
+# target_bases_at_20X, on_target_vs_selected, contamination, cluster_density_MiSeq, cluster_density_NextSeq,
+# cluster_density_NovaSeq, properly_paired, pct_off_amplicon, fastq_total_sequences, peddy_sex_check
+
+# function:                 Specifies the function in read_qc_files.py to be applied for the tool
+# plot_type:                Names the plot type for recognition by read_qc_files.py
+# plot_title:               Plot title text
+# plot_text:                Plot legend text
+# conversion_to_percent:    Specifies whether the parsed data requires conversion to percentage before plotting
+# upper_lim_linestyle:      Linestyle for upper bound/limit line
+# lower_lim_linestyle:      Linestyle for lower bound/limit line
+# lower_lim_linecolour:     Line colour for lower bound/limit line
+# upper_lim_linecolour:     Line colour for upper bound/limit line
+# upper_lim:                Value for upper limit line
+# upper_lim_label:          Label text for upper limit line
+# lower_lim:                Value for lower limit line
+# lower_lim_label:          Label text for lower limit line
+# report_type:              Sub-dictionary containing the report types and sequencer identifiers for filtering
+#                           Sub dictionary values are False if plot is not required for this report type.
+#   WES:                    Sequencer options are: "NB551068, NB552085, A01229" sequencers
+#   PANEL:                  Sequencer options are: "NB551068, NB552085"
+#   SWIFT:                  Sequencer options are: "M02631"
+#   NEXTSEQ_LUIGI:          Sequencer options are: "NB552085"
+#   NEXTSEQ_MARIO:          Sequencer options are: "NB551068"
+#   MISEQ_ONC:              Sequencer options are: "M02353"
+#   MISEQ_DNA:              Sequencer options are: "M02631"
+#   NOVASEQ_PIKACHU:        Sequencer options are: "A01229"
+#   TSO500:                 Sequencer options are: "NB551068, NB552085, A01229"
+#   ADX:                    Sequencer options are: "M02631"
+#   SNP:                    Sequencer options are: "M02631"
+
 tool_settings = {
     "run_names": {
         "function": "describe_run_names",
         "plot_type": "table",
         "plot_title": "Run names",
         "plot_text": "These are the runs included on the below plots. Numbers are used to simplify the x axis labels "
-                     "on the plots, so this table can be used to link the axis labels to run name. Outliers are "
-                     "displayed as circles, median as orange line, IQR as box",
+                     "on the plots, so this table can be used to link the axis labels to run name",
         "conversion_to_percent": False,
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
@@ -130,9 +159,11 @@ tool_settings = {
             "NEXTSEQ_MARIO": "NB551068",
             "MISEQ_ONC": "M02353",
             "MISEQ_DNA": "M02631",
-            "NOVASEQ_PIKACHU": "A01229"
+            "NOVASEQ_PIKACHU": "A01229",
+            "TSO500": "NB551068, NB552085, A01229",
+            "ADX": "M02631",
+            "SNP": "M02631"
         },
-        "sequencer": ""
     },
     "picard_insertsize": {
         "function": "parse_multiqc_output",
@@ -142,8 +173,10 @@ tool_settings = {
         "conversion_to_percent": False,
         "header_present": True,
         "plot_title": "Picard Insert Sizes",
-        "plot_text": "Boxplots showing the range and spread of insert sizes. This will highlight DNA fragmentation. "
-                     "Outliers are displayed as circles, median as orange line, IQR as box",
+        "plot_text": "Boxplots showing the range and spread of insert sizes. This will highlight DNA fragmentation. \n"
+                     "Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond \n"
+                     "the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median is \n"
+                     "displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": "r",
@@ -160,7 +193,10 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": False,
+            "ADX": False,
+            "SNP": False
         },
     },
     "q30_percent": {
@@ -172,8 +208,9 @@ tool_settings = {
         "header_present": True,
         "plot_title": "BCL2Fastq Q30 percentage",
         "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane.\n "
-                     "This shows how well the base calling has performed on the sequencer. Outliers are displayed as "
-                     "circles, median as orange line, IQR as box",
+                     "This shows how well the base calling has performed on the sequencer. Boxes display the inter-\n"
+                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are \n"
+                     "displayed as circles, and are data beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
@@ -190,7 +227,10 @@ tool_settings = {
             "NEXTSEQ_MARIO": "NB551068",
             "MISEQ_ONC": "M02353",
             "MISEQ_DNA": "M02631",
-            "NOVASEQ_PIKACHU": "A01229"
+            "NOVASEQ_PIKACHU": "A01229",
+            "TSO500": False,
+            "ADX": False,
+            "SNP": False
         },
     },
     "target_bases_at_30X": {
@@ -201,8 +241,10 @@ tool_settings = {
         "header_present": True,
         "conversion_to_percent": True,
         "plot_title": "target_bases_at_30X",
-        "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 30X. Outliers are "
-                     "displayed as circles, median as orange line, IQR as box",
+        "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 30X. Boxes display\n"
+                     " the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. \n"
+                     "Outliers are displayed as circles, and are data beyond the whiskers. Median is displayed as an \n"
+                     "orange line",
         "upper_lim_linestyle": "dashed",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'r',
@@ -219,7 +261,10 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": False,
+            "ADX": False,
+            "SNP": False
         },
     },
     "target_bases_at_20X": {
@@ -230,9 +275,11 @@ tool_settings = {
         "conversion_to_percent": True,
         "header_present": True,
         "plot_title": "Target Bases at 20X",
-        "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 20X.\nSamples below "
-                     "90% are failed. Samples above 95% pass. Samples between 90-95% may be analysed with caution. "
-                     "Outliers are displayed as circles, median as orange line, IQR as box",
+        "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 20X. Samples \n"
+                     "below 90% are failed. Samples above 95% pass. Samples between 90-95% may be analysed with \n"
+                     "caution. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR \n"
+                     " the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median is \n"
+                     "displayed as an orange line",
         "upper_lim_linestyle": "dashed",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'r',
@@ -249,7 +296,10 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": False,
+            "ADX": False,
+            "SNP": False
         },
     },
     "on_target_vs_selected": {
@@ -260,9 +310,10 @@ tool_settings = {
         "conversion_to_percent": False,
         "header_present": True,
         "plot_title": "On target vs selected",
-        "plot_text": "The % of on and near bait bases that are on as opposed to near (as defined by the BED file "
-                     "containing the capture regions). Outliers are displayed as circles, median as orange line, "
-                     "IQR as box",
+        "plot_text": "The % of on and near bait bases that are on as opposed to near (as defined by the BED file \n"
+                     "containing the capture regions). Boxes display the inter-quartile range (25th-75th percentile).\n"
+                     " Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as circles, and are data \n"
+                     "beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
@@ -279,7 +330,10 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": False,
+            "ADX": False,
+            "SNP": False
         },
     },
     "contamination": {
@@ -290,8 +344,8 @@ tool_settings = {
         "conversion_to_percent": False,
         "header_present": True,
         "plot_title": "Contamination",
-        "plot_text": "The contamination estimate as calculated by VerifyBAMID (FREEMIX). A sample is considered "
-                     "contaminated when FREEMIX > 0.03. Outliers are displayed as circles, median as orange line, "
+        "plot_text": "The contamination estimate as calculated by VerifyBAMID (FREEMIX). A sample is considered \n"
+                     "contaminated when FREEMIX > 0.03. Outliers are displayed as circles, median as orange line, \n"
                      "IQR as box",
         "lower_lim_linestyle": "",
         "upper_lim_linestyle": "solid",
@@ -309,9 +363,11 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": False,
+            "ADX": False,
+            "SNP": False
         },
-        "sequencer": ""
     },
     "cluster_density_MiSeq": {
         "function": "parse_multiqc_output",
@@ -321,9 +377,11 @@ tool_settings = {
         "conversion_to_percent": False,
         "header_present": True,
         "plot_title": "MiSeq Lane cluster density",
-        "plot_text": "MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters per "
-                     "mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq is 1200-1400 K/mm2. "
-                     "Outliers are displayed as circles, median as orange line, IQR as box",
+        "plot_text": "MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
+                     "per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq is 1200-1400 \n"
+                     "K/mm2. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR \n"
+                     "beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median \n"
+                     "is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
@@ -340,9 +398,11 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": False,
+            "ADX": "M02631",
+            "SNP": False
         },
-        "sequencer": ""
     },
     "cluster_density_NextSeq": {
         "function": "parse_multiqc_output",
@@ -352,9 +412,11 @@ tool_settings = {
         "conversion_to_percent": False,
         "header_present": True,
         "plot_title": "NextSeq Lane cluster density",
-        "plot_text": "NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
-                     "per mm2 of flowcell area for each sequencing lane. Optimal density for NextSeq is 170-230 K/mm2. "
-                     "Outliers are displayed as circles, median as orange line, IQR as box",
+        "plot_text": "NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
+                     "per mm2 of flowcell area for each sequencing lane. Optimal density for NextSeq is 170-230  \n"
+                     "K/mm2. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR \n"
+                     "beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median \n"
+                     "is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
@@ -371,9 +433,11 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": "NB551068, NB552085",
+            "ADX": False,
+            "SNP": False
         },
-        "sequencer": ""
     },
     "cluster_density_NovaSeq": {
         "function": "parse_multiqc_output",
@@ -383,9 +447,11 @@ tool_settings = {
         "conversion_to_percent": False,
         "header_present": True,
         "plot_title": "NovaSeq Lane cluster density",
-        "plot_text": "NovaSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
-                     "per mm2 of flowcell area for each sequencing lane. Optimal density for NovaSeq is ___ - ___ "
-                     "K/mm2. Outliers are displayed as circles, median as orange line, IQR as box",
+        "plot_text": "NovaSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
+                     "per mm2 of flowcell area for each sequencing lane. Optimal density for NovaSeq is ___ - ___ \n"
+                     "K/mm2. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR \n"
+                     "beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median \n"
+                     "is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
@@ -402,9 +468,11 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": "A01229",
+            "ADX": False,
+            "SNP": False
         },
-        "sequencer": ""
     },
     "properly_paired": {
         "function": "parse_multiqc_output",
@@ -414,10 +482,11 @@ tool_settings = {
         "conversion_to_percent": False,
         "header_present": True,
         "plot_title": "Properly Paired",
-        "plot_text": "The percentage of QC-passed reads that were properly paired. Properly paired = both mates of a "
-                     "read pair map to the same chromosome, oriented towards one another, with a sensible insert size. "
-                     "Note, the negative control is NOT included in this plot. Outliers are displayed as circles, "
-                     "median as orange line, IQR as box",
+        "plot_text": "The percentage of QC-passed reads that were properly paired. Properly paired = both mates of a \n"
+                     "read pair map to the same chromosome, oriented towards one another, with a sensible insert \n"
+                     "size. Note, the negative control is NOT included in this plot. Boxes display the inter-\n"
+                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are \n"
+                     "displayed as circles, and are data beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
@@ -434,9 +503,11 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": False,
+            "ADX": False,
+            "SNP": False
         },
-        "sequencer": ""
     },
     "pct_off_amplicon": {
         "function": "parse_multiqc_output",
@@ -446,9 +517,11 @@ tool_settings = {
         "conversion_to_percent": False,
         "header_present": True,
         "plot_title": "Percentage of Off Amplicon Bases",
-        "plot_text": "The percentage of aligned passing filter (PF) bases that mapped neither on or near an amplicon. "
-                     "This is a measure of primer specificity. Note, the negative control is  NOT included in this "
-                     "plot. Outliers are displayed as circles, median as orange line, IQR as box",
+        "plot_text": "The percentage of aligned passing filter (PF) bases that mapped neither on or near an \n"
+                     "amplicon. This is a measure of primer specificity. Note, the negative control is  NOT included \n"
+                     "in this plot. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 \n"
+                     "* IQR beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. \n"
+                     "Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
@@ -465,9 +538,11 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": False,
+            "ADX": False,
+            "SNP": False
         },
-        "sequencer": ""
     },
     "fastq_total_sequences": {
         "function": "parse_multiqc_output",
@@ -477,8 +552,9 @@ tool_settings = {
         "header_present": True,
         "conversion_to_percent": False,
         "plot_title": "Fastq Total Sequences",
-        "plot_text": "Boxplot showing the total number of sequences. Outliers are displayed as circles, median as "
-                     "orange line, IQR as box",
+        "plot_text": "Boxplot showing the total number of sequences. Boxes display the inter-quartile range \n"
+                     "(25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as \n"
+                     "circles, and are data beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
@@ -495,7 +571,10 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": False,
+            "ADX": False,
+            "SNP": False
         },
     },
     "peddy_sex_check": {
@@ -525,12 +604,21 @@ tool_settings = {
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
             "MISEQ_DNA": False,
-            "NOVASEQ_PIKACHU": False
+            "NOVASEQ_PIKACHU": False,
+            "TSO500": False,
+            "ADX": False,
+            "SNP": False
         }
     }
 }
 
 # ==== HTML Templates ===================================================================
+# Templates used by read_qc_files.py to build tool-specific html modules, and generate individual trend reports.
+
+# body_template     Template used to create the individual trend reports
+# plot_template     Template used to create html blocks for each QC plot.
+# table_template    Template used to create a html tables for each QC report.
+
 body_template = '<div class="body" align="left">{}<br /></div>'
 
 plot_template = \
