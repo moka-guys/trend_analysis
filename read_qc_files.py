@@ -18,6 +18,7 @@ import smtplib
 from email.message import Message
 import pandas as pd
 import time
+import importlib
 import tempfile
 
 
@@ -395,8 +396,7 @@ class TrendReport(object):
         If and else statements deal with different formats of different input files.
         """
         if config.tool_settings[tool]["calculation"] == "normalise_by_capture_kit":
-            self.get_github_file(self.github_repo, self.github_file)
-            #from self.github_file import vcp1_panel_list, vcp2_panel_list, vcp3_panel_list
+            vcp1_panel_list, vcp2_panel_list, vcp3_panel_list = self.get_panel_list()
         with open(file_path, 'r') as input_file:
             column_index = self.return_column_index(input_file, tool)
             for linecount, line in enumerate(input_file):
@@ -404,10 +404,27 @@ class TrendReport(object):
                 # lines beginning with hashes (commented out lines, do not contain data)
                 identifier_list = "#", "Sample", "CLUSTER_DENSITY"
                 if not line.isspace() and not line.startswith(identifier_list):
-                        to_return = self.calculate_measurement(line, column_index, tool)
+                        to_return = self.calculate_measurement(line, column_index, tool, vcp1_panel_list,
+                                                               vcp2_panel_list, vcp3_panel_list)
         return to_return
 
-    def calculate_measurement(self, line, column_index, tool):
+    def get_panel_list(self):
+        self.get_github_file(self.github_repo, self.github_file)
+        with open(os.getcwd() + "/" + self.github_file, 'r') as github_file:
+            for line in github_file:
+                if line.startswith("vcp1_panel_list"):
+                    vcp1_panel_list = (line.split('[')[1].strip()).split(']')[0].strip()
+                if line.startswith("vcp2_panel_list"):
+                    vcp2_panel_list = (line.split('[')[1].strip()).split(']')[0].strip()
+                if line.startswith("vcp3_panel_list"):
+                    vcp3_panel_list = (line.split('[')[1].strip()).split(']')[0].strip()
+            print(vcp1_panel_list)
+            print(vcp2_panel_list)
+            print(vcp3_panel_list)
+        return vcp1_panel_list, vcp2_panel_list, vcp3_panel_list
+
+
+    def calculate_measurement(self, line, column_index, vcp1_panel_list, vcp2_panel_list, vcp3_panel_list, tool):
         """
         Conducts required calculation on parsed data. For cluster density plots, divide by 1000 to give cluster density.
         Contamination, target_bases_at_20X and target_bases_at_30X plots require conversion to percentage.
@@ -444,7 +461,7 @@ class TrendReport(object):
         Creates a temporary dir, clones into that dir, copies the desired file from that dir, and removes the temporary dir.
         """
         t = tempfile.mkdtemp()
-        git.Repo.clone_from(github_repo, t, branch='master', depth=1)
+        git.Repo.clone_from(github_repo, t, branch='Production', depth=1)
         shutil.move(os.path.join(t, file), os.path.join(os.getcwd(), file))
         shutil.rmtree(t)
 
