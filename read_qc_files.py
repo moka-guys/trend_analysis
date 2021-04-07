@@ -3,6 +3,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import subprocess
 import os
+import git
+import shutil
 import datetime
 import pdfkit
 import sys
@@ -16,6 +18,7 @@ import smtplib
 from email.message import Message
 import pandas as pd
 import time
+import tempfile
 
 
 def arg_parse():
@@ -74,7 +77,7 @@ class TrendReport(object):
    """
 
     def __init__(self, input_folder, output_folder, images_folder, runtype, template_dir, archive_folder, logopath,
-                 plot_order, wkhtmltopdf_path):
+                 plot_order, wkhtmltopdf_path, github_repo, github_file):
         """
         The constructor for TrendReport class
         """
@@ -89,6 +92,8 @@ class TrendReport(object):
         self.logopath = logopath
         self.plot_order = plot_order
         self.wkhtmltopdf_path = wkhtmltopdf_path
+        self.github_repo = github_repo
+        self.github_file = github_file
 
     def call_tools(self, methods):
         """
@@ -359,7 +364,8 @@ class TrendReport(object):
         # then find the file and pass it to return_columns, which generates a list
         # add this to the dictionary
         for run in sorted_run_list:
-            if any(sequencer in run for sequencer in config.tool_settings[tool]["report_type"][self.runtype].split(',')):
+            if any(sequencer in run
+                   for sequencer in config.tool_settings[tool]["report_type"][self.runtype].split(', ')):
                 input_file = find_file_path(input_file_name, os.path.join(self.input_folder, run))
                 if input_file:
                     tool_dict[run] = self.return_columns(input_file, tool)
@@ -388,43 +394,59 @@ class TrendReport(object):
         Then for each remaining line, split the line, pull out the column of interest and add to a list.
         If and else statements deal with different formats of different input files.
         """
-        to_return = []
+        if config.tool_settings[tool]["calculation"] == "normalise_by_capture_kit":
+            self.get_github_file(self.github_repo, self.github_file)
+            #from self.github_file import vcp1_panel_list, vcp2_panel_list, vcp3_panel_list
         with open(file_path, 'r') as input_file:
             column_index = self.return_column_index(input_file, tool)
             for linecount, line in enumerate(input_file):
-                if config.tool_settings[tool]["input_file"] == "illumina_lane_metrics":
-                    # skip the first 7 rows as these are headers
-                    if config.tool_settings[tool]["header_present"] and 0 <= linecount <= 6:
-                        pass
-                    else:
-                        # skips blank lines
-                        if not line.isspace():
-                            # illumina lane metrics require division by 1000 to give the cluster density
-                            measurement = float(line.split("\t")[column_index]) / 1000
-                            to_return.append(measurement)
-                elif config.tool_settings[tool] == "fastq_total_sequences":
-                    pass #ADD CODE HERE TO PARSE THE FILE AS DISCUSSED WITH ALED/CALCULATE AS DESCRIBED IN MY NOTES
-                else:
-                    if config.tool_settings[tool]["header_present"] and linecount == 0:
-                        pass
-                    else:
-                        # exclude negative control stats from the "properly_paired" and "pct_off_amplicon" plots
-                        if (config.tool_settings[tool]["input_file"] in ["multiqc_picard_pcrmetrics.txt",
-                                                                         "multiqc_samtools_flagstat.txt"]) \
-                                and ("NTCcon" in line):
-                            pass
-                        elif config.tool_settings[tool]["conversion_to_percent"]:
-                            measurement = float(line.split("\t")[column_index]) * 100
-                            to_return.append(measurement)
-                        elif config.tool_settings[tool]["plot_type"] == "stacked_bar":
-                            measurement = line.split("\t")[column_index]
-                            # do not include blank space, as not every line contains sex check data
-                            if measurement is not "":
-                                to_return.append(measurement)
-                        else:
-                            measurement = float(line.split("\t")[column_index])
-                            to_return.append(measurement)
+                # skips blank lines, header lines (start with 'Sample' or "CLUSTER_DENSITY")
+                # lines beginning with hashes (commented out lines, do not contain data)
+                identifier_list = "#", "Sample", "CLUSTER_DENSITY"
+                if not line.isspace() and not line.startswith(identifier_list):
+                        to_return = self.calculate_measurement(line, column_index, tool)
         return to_return
+
+    def calculate_measurement(self, line, column_index, tool):
+        """
+        Conducts required calculation on parsed data. For cluster density plots, divide by 1000 to give cluster density.
+        Contamination, target_bases_at_20X and target_bases_at_30X plots require conversion to percentage.
+        properly_paired and pct_off_amplicon plots require removal of negative controls. peddy_sex_check requires
+        exclusion of blank elements, as not every line contains sex check data. fastq_total_sequences requires
+        normalisation by capture kit. All other plots no calculation required
+            :param line:            (str) one line from the input file
+            :param column_index:    (int) index of the column of interest that contains the relevant data for plotting
+            :param tool:            (str) tool name - allows access to tool specific config settings
+            :return to_return:      (list) a list of measurements from the column of interest
+        """
+        to_return = []
+        if config.tool_settings[tool]["calculation"] == "divide_by_1000":
+            to_return.append(float(line.split("\t")[column_index]) / 1000)
+        elif config.tool_settings[tool]["calculation"] == "convert_to_percent":
+            to_return.append(float(line.split("\t")[column_index]) * 100)
+        elif config.tool_settings[tool]["calculation"] == "remove_negative_controls":
+            if "NTCcon" in line:
+                pass
+        elif config.tool_settings[tool]["calculation"] == "exclude_blank_elements":
+            measurement = line.split("\t")[column_index]
+            if measurement is not "":
+                to_return.append(measurement)
+        elif config.tool_settings[tool]["calculation"] == "normalise_by_capture_kit":
+            # ADD CODE HERE TO PARSE THE FILE AS DISCUSSED WITH ALED/CALCULATE AS DESCRIBED IN MY NOTES
+            # if pan number in any(vcp1_panel list, vcp2_panel_list, vcp3_panel_list) then:
+            pass
+        else:
+            to_return.append(float(line.split("\t")[column_index]))
+        return to_return
+
+    def get_github_file(self, github_repo, file):
+        """
+        Creates a temporary dir, clones into that dir, copies the desired file from that dir, and removes the temporary dir.
+        """
+        t = tempfile.mkdtemp()
+        git.Repo.clone_from(github_repo, t, branch='master', depth=1)
+        shutil.move(os.path.join(t, file), os.path.join(os.getcwd(), file))
+        shutil.rmtree(t)
 
 
 class Emails(object):
@@ -656,7 +678,9 @@ def main():
                             images_folder=inputs["images_folder"], runtype=runtype,
                             template_dir=inputs["template_dir"], archive_folder=inputs["archive_folder"],
                             logopath=inputs["logopath"], plot_order=inputs["plot_order"],
-                            wkhtmltopdf_path=inputs["wkhtmltopdf_path"])
+                            wkhtmltopdf_path=inputs["wkhtmltopdf_path"],
+                            github_repo="https://github.com/moka-guys/automate_demultiplex",
+                            github_file="automate_demultiplex_config.py")
             methods = inspect.getmembers(t, predicate=inspect.ismethod)
             t.call_tools(methods)
             e = Emails(input_folder=inputs["input_folder"], runtype=runtype, wes_email=inputs["wes_email"],

@@ -54,7 +54,8 @@ general_config = {"general": {"run_frequency": 2,
                               "run_types": ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC",
                                             "MISEQ_DNA", "NOVASEQ_PIKACHU", "TSO500", "ADX", "SNP"],
                               "wkhtmltopdf_path": "/usr/local/bin/wkhtmltopdf",
-                              "plot_order": ["run_names", "q30_percent", "picard_insertsize", "on_target_vs_selected",
+                              "plot_order": ["run_names", "q30_percent_MiSeq", "q30_percent_NextSeq",
+                                             "q30_percent_NovaSeq", "picard_insertsize", "on_target_vs_selected",
                                              "target_bases_at_20X", "target_bases_at_30X", "cluster_density_MiSeq",
                                              "cluster_density_NextSeq", "cluster_density_NovaSeq", "contamination",
                                              "properly_paired", "pct_off_amplicon", "fastq_total_sequences",
@@ -112,7 +113,7 @@ general_config = {"general": {"run_frequency": 2,
 # plot_type:                Names the plot type for recognition by read_qc_files.py
 # plot_title:               Plot title text
 # plot_text:                Plot legend text
-# conversion_to_percent:    Specifies whether the parsed data requires conversion to percentage before plotting
+# calculation:              Specifies the type of calculation to be conducted on the parsed data before plotting
 # upper_lim_linestyle:      Linestyle for upper bound/limit line
 # lower_lim_linestyle:      Linestyle for lower bound/limit line
 # lower_lim_linecolour:     Line colour for lower bound/limit line
@@ -142,7 +143,7 @@ tool_settings = {
         "plot_title": "Run names",
         "plot_text": "These are the runs included on the below plots. Numbers are used to simplify the x axis labels "
                      "on the plots, so this table can be used to link the axis labels to run name",
-        "conversion_to_percent": False,
+        "calculation": False,
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
@@ -170,8 +171,7 @@ tool_settings = {
         "input_file": "multiqc_picard_insertSize.txt",
         "plot_type": "box_plot",
         "column_of_interest": "MEAN_INSERT_SIZE",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": False,
         "plot_title": "Picard Insert Sizes",
         "plot_text": "Boxplots showing the range and spread of insert sizes. This will highlight DNA fragmentation. \n"
                      "Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond \n"
@@ -204,8 +204,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_bcl2fastq_bylane.txt",
         "column_of_interest": "percent_Q30",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": False,
         "plot_title": "BCL2Fastq Q30 percentage",
         "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane.\n "
                      "This shows how well the base calling has performed on the sequencer. Boxes display the inter-\n"
@@ -238,8 +237,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_bcl2fastq_bylane.txt",
         "column_of_interest": "percent_Q30",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": False,
         "plot_title": "BCL2Fastq Q30 percentage",
         "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane.\n "
                      "This shows how well the base calling has performed on the sequencer. Boxes display the inter-\n"
@@ -272,8 +270,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_bcl2fastq_bylane.txt",
         "column_of_interest": "percent_Q30",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": False,
         "plot_title": "BCL2Fastq Q30 percentage",
         "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane.\n "
                      "This shows how well the base calling has performed on the sequencer. Boxes display the inter-\n"
@@ -306,8 +303,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_picard_HsMetrics.txt",
         "column_of_interest": "PCT_TARGET_BASES_30X",
-        "header_present": True,
-        "conversion_to_percent": True,
+        "calculation": "convert_to_percent",
         "plot_title": "target_bases_at_30X",
         "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 30X. Boxes display\n"
                      " the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. \n"
@@ -340,8 +336,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_picard_HsMetrics.txt",
         "column_of_interest": "PCT_TARGET_BASES_20X",
-        "conversion_to_percent": True,
-        "header_present": True,
+        "calculation": "convert_to_percent",
         "plot_title": "Target Bases at 20X",
         "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 20X. Samples \n"
                      "below 90% are failed. Samples above 95% pass. Samples between 90-95% may be analysed with \n"
@@ -375,8 +370,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_picard_HsMetrics.txt",
         "column_of_interest": "ON_BAIT_VS_SELECTED",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": False,
         "plot_title": "On target vs selected",
         "plot_text": "The % of on and near bait bases that are on as opposed to near (as defined by the BED file \n"
                      "containing the capture regions). Boxes display the inter-quartile range (25th-75th percentile).\n"
@@ -409,8 +403,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_verifybamid.txt",
         "column_of_interest": "FREEMIX",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": "convert_to_percent",
         "plot_title": "Contamination",
         "plot_text": "The contamination estimate as calculated by VerifyBAMID (FREEMIX). A sample is considered \n"
                      "contaminated when FREEMIX > 0.03. Outliers are displayed as circles, median as orange line, \n"
@@ -442,8 +435,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "illumina_lane_metrics",
         "column_of_interest": "## htsjdk.samtools.metrics.StringHeader",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": "divide_by_1000",
         "plot_title": "MiSeq Lane cluster density",
         "plot_text": "MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
                      "per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq is 1200-1400 \n"
@@ -477,8 +469,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "illumina_lane_metrics",
         "column_of_interest": "## htsjdk.samtools.metrics.StringHeader",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": "divide_by_1000",
         "plot_title": "NextSeq Lane cluster density",
         "plot_text": "NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
                      "per mm2 of flowcell area for each sequencing lane. Optimal density for NextSeq is 170-230  \n"
@@ -512,8 +503,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "illumina_lane_metrics",
         "column_of_interest": "## htsjdk.samtools.metrics.StringHeader",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": "divide_by_1000",
         "plot_title": "NovaSeq Lane cluster density",
         "plot_text": "NovaSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
                      "per mm2 of flowcell area for each sequencing lane. Optimal density for NovaSeq is ___ - ___ \n"
@@ -547,8 +537,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_samtools_flagstat.txt",
         "column_of_interest": "properly paired_passed_pct",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": "remove_negative_controls",
         "plot_title": "Properly Paired",
         "plot_text": "The percentage of QC-passed reads that were properly paired. Properly paired = both mates of a \n"
                      "read pair map to the same chromosome, oriented towards one another, with a sensible insert \n"
@@ -582,8 +571,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_picard_pcrmetrics.txt",
         "column_of_interest": "PCT_OFF_AMPLICON",
-        "conversion_to_percent": False,
-        "header_present": True,
+        "calculation": "remove_negative_controls",
         "plot_title": "Percentage of Off Amplicon Bases",
         "plot_text": "The percentage of aligned passing filter (PF) bases that mapped neither on or near an \n"
                      "amplicon. This is a measure of primer specificity. Note, the negative control is  NOT included \n"
@@ -617,8 +605,7 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_fastqc.txt",
         "column_of_interest": "Total Sequences",
-        "header_present": True,
-        "conversion_to_percent": False,
+        "calculation": "normalise_by_capture_kit",
         "plot_title": "Fastq Total Sequences",
         "plot_text": "Boxplot showing the total number of sequences. Boxes display the inter-quartile range \n"
                      "(25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as \n"
@@ -650,8 +637,7 @@ tool_settings = {
         "plot_type": "stacked_bar",
         "input_file": "multiqc_peddy.txt",
         "column_of_interest": "error_sex_check",
-        "header_present": True,
-        "conversion_to_percent": False,
+        "calculation": "exclude_blank_elements",
         "plot_title": "Correct Sex",
         "plot_text": "Number of sample names with incorrect sex per run. The output is 'True' if the sex encoded in "
                      "the sample name matches that predicted by peddy. It is 'False' if it does not match the "
