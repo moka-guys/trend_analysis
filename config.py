@@ -52,7 +52,7 @@ with open(pw_file, "r") as email_password_file:
 general_config = {"general": {"run_frequency": 2,
                               "number_of_runs_to_include": 5,
                               "run_types": ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC",
-                                            "MISEQ_DNA", "NOVASEQ_PIKACHU", "TSO500", "ADX", "SNP"],
+                                            "MISEQ_DNA", "NOVASEQ_PIKACHU"],
                               "wkhtmltopdf_path": "/usr/local/bin/wkhtmltopdf",
                               "plot_order": ["run_names", "q30_percent_MiSeq", "q30_percent_NextSeq",
                                              "q30_percent_NovaSeq", "picard_insertsize", "on_target_vs_selected",
@@ -602,7 +602,7 @@ tool_settings = {
     },
     "fastq_total_sequences": {
         "function": "parse_multiqc_output",
-        "plot_type": "box_plot",
+        "plot_type": "stacked_bar",
         "input_file": "multiqc_fastqc.txt",
         "column_of_interest": "Total Sequences",
         "calculation": "normalise_by_capture_kit",

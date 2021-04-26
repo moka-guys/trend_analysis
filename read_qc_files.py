@@ -1,3 +1,4 @@
+from __future__ import division
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -20,6 +21,7 @@ import pandas as pd
 import time
 import importlib
 import tempfile
+import numpy as np
 
 
 def arg_parse():
@@ -57,6 +59,32 @@ def get_inputs(args):
         inputs.update(config.general_config['production'])
     return inputs
 
+def get_panel_dict(github_repo, github_file):
+    """
+
+    :param github_repo:
+    :param github_file:
+    :return:
+    """
+    panel_dict = OrderedDict({})
+    get_github_file(github_repo, github_file)
+    with open(os.getcwd() + "/" + github_file, 'r') as github_file:
+        for line in github_file:
+            for panel_list in ["vcp1_panel_list", "vcp2_panel_list", "vcp3_panel_list"]:
+                if line.startswith("{}".format(panel_list)):
+                    panel_dict[panel_list] = (line.split('[')[1].strip()).split(']')[0].strip().split(", ")
+        return panel_dict
+
+
+def get_github_file(github_repo, github_file):
+    """
+    Creates a temporary dir, clones into that dir, copies the desired file from that dir, and removes the temporary
+    dir.
+    """
+    t = tempfile.mkdtemp()
+    git.Repo.clone_from(github_repo, t, branch='Production', depth=1)
+    shutil.move(os.path.join(t, github_file), os.path.join(os.getcwd(), github_file))
+    shutil.rmtree(t)
 
 class TrendReport(object):
     """
@@ -66,6 +94,7 @@ class TrendReport(object):
         dictionary        (OrderedDict) populated with qc data from multiqc outputs required for each plot
         plots_html        (list) list for which plot html is appended to, to be added to final generated trend report
         runtype           (str) a html trend report is generated for each runtype specified in config.py
+        panel_dict        (OrderedDict) populated with lists of panels that use each type of vcp capture kit
         input_folder      (str) path to MultiQC data per run
         output_folder     (str) path to save location for html trend reports and archive_index.html
         images_folder     (str) path to viapath logo images and saved plots
@@ -77,14 +106,15 @@ class TrendReport(object):
         wkhtmltopdf_path  (str) Path to html conversion utility
    """
 
-    def __init__(self, input_folder, output_folder, images_folder, runtype, template_dir, archive_folder, logopath,
-                 plot_order, wkhtmltopdf_path, github_repo, github_file):
+    def __init__(self, input_folder, output_folder, images_folder, runtype, panel_dict, template_dir, archive_folder,
+                 logopath, plot_order, wkhtmltopdf_path):
         """
         The constructor for TrendReport class
         """
         self.dictionary = OrderedDict({})
         self.plots_html = []
         self.runtype = runtype
+        self.panel_dict = panel_dict
         self.input_folder = input_folder
         self.output_folder = output_folder
         self.images_folder = images_folder
@@ -93,8 +123,6 @@ class TrendReport(object):
         self.logopath = logopath
         self.plot_order = plot_order
         self.wkhtmltopdf_path = wkhtmltopdf_path
-        self.github_repo = github_repo
-        self.github_file = github_file
 
     def call_tools(self, methods):
         """
@@ -195,11 +223,13 @@ class TrendReport(object):
         """
         plt.close()
         # .apply(pd.value_counts) counts the number of 'True' and 'False' results per sample
-        df = pd.DataFrame(self.dictionary[tool]).apply(pd.value_counts)
+        if tool == "peddy_sex_check":
+            df = pd.DataFrame.from_dict(self.dictionary[tool], orient='index').apply(pd.value_counts, axis=1).T
+        elif tool == "fastq_total_sequences":
+            df = pd.DataFrame.from_dict(self.dictionary[tool], orient='columns').apply(pd.value_counts, axis=0)
         # replaces run names with x axis labels
         df.columns = self.x_labels(tool)
-        # T transforms dataframe so row index is now run names
-        df.T.plot.bar(rot=0)
+        df.plot.bar(rot=0)
         plt.xticks()
         plt.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
         plt.ticklabel_format(axis='y', useOffset=False, style='plain')
@@ -395,75 +425,108 @@ class TrendReport(object):
         Then for each remaining line, split the line, pull out the column of interest and add to a list.
         If and else statements deal with different formats of different input files.
         """
-        if config.tool_settings[tool]["calculation"] == "normalise_by_capture_kit":
-            vcp1_panel_list, vcp2_panel_list, vcp3_panel_list = self.get_panel_list()
+        identifier_list = "#", "Sample", "CLUSTER_DENSITY"
+        to_return = []
         with open(file_path, 'r') as input_file:
             column_index = self.return_column_index(input_file, tool)
             for linecount, line in enumerate(input_file):
                 # skips blank lines, header lines (start with 'Sample' or "CLUSTER_DENSITY")
                 # lines beginning with hashes (commented out lines, do not contain data)
-                identifier_list = "#", "Sample", "CLUSTER_DENSITY"
-                if not line.isspace() and not line.startswith(identifier_list):
-                        to_return = self.calculate_measurement(line, column_index, tool, vcp1_panel_list,
-                                                               vcp2_panel_list, vcp3_panel_list)
+                if line.split("\t")[column_index] and not (line.isspace() or line.startswith(identifier_list)):
+                    to_return.append(self.calculate_measurement(input_file, line, column_index, tool))
         return to_return
 
-    def get_panel_list(self):
-        self.get_github_file(self.github_repo, self.github_file)
-        with open(os.getcwd() + "/" + self.github_file, 'r') as github_file:
-            for line in github_file:
-                if line.startswith("vcp1_panel_list"):
-                    vcp1_panel_list = (line.split('[')[1].strip()).split(']')[0].strip()
-                if line.startswith("vcp2_panel_list"):
-                    vcp2_panel_list = (line.split('[')[1].strip()).split(']')[0].strip()
-                if line.startswith("vcp3_panel_list"):
-                    vcp3_panel_list = (line.split('[')[1].strip()).split(']')[0].strip()
-            print(vcp1_panel_list)
-            print(vcp2_panel_list)
-            print(vcp3_panel_list)
-        return vcp1_panel_list, vcp2_panel_list, vcp3_panel_list
-
-
-    def calculate_measurement(self, line, column_index, vcp1_panel_list, vcp2_panel_list, vcp3_panel_list, tool):
+    def calculate_measurement(self, input_file, line, column_index, tool):
         """
         Conducts required calculation on parsed data. For cluster density plots, divide by 1000 to give cluster density.
         Contamination, target_bases_at_20X and target_bases_at_30X plots require conversion to percentage.
         properly_paired and pct_off_amplicon plots require removal of negative controls. peddy_sex_check requires
         exclusion of blank elements, as not every line contains sex check data. fastq_total_sequences requires
-        normalisation by capture kit. All other plots no calculation required
+        calculation of samples that fall within +/- 20% of the average for the run (PANEL runtypes require normalisation
+        by capture kit). All other plots no calculation required
+            :param input_file:      (str) name of raw data file (multiqc output file)
             :param line:            (str) one line from the input file
             :param column_index:    (int) index of the column of interest that contains the relevant data for plotting
             :param tool:            (str) tool name - allows access to tool specific config settings
             :return to_return:      (list) a list of measurements from the column of interest
         """
-        to_return = []
         if config.tool_settings[tool]["calculation"] == "divide_by_1000":
-            to_return.append(float(line.split("\t")[column_index]) / 1000)
+            to_return = float(line.split("\t")[column_index]) / 1000
         elif config.tool_settings[tool]["calculation"] == "convert_to_percent":
-            to_return.append(float(line.split("\t")[column_index]) * 100)
+            to_return = float(line.split("\t")[column_index]) * 100
         elif config.tool_settings[tool]["calculation"] == "remove_negative_controls":
             if "NTCcon" in line:
                 pass
         elif config.tool_settings[tool]["calculation"] == "exclude_blank_elements":
-            measurement = line.split("\t")[column_index]
-            if measurement is not "":
-                to_return.append(measurement)
+            to_return = line.split("\t")[column_index]
         elif config.tool_settings[tool]["calculation"] == "normalise_by_capture_kit":
-            # ADD CODE HERE TO PARSE THE FILE AS DISCUSSED WITH ALED/CALCULATE AS DESCRIBED IN MY NOTES
-            # if pan number in any(vcp1_panel list, vcp2_panel_list, vcp3_panel_list) then:
-            pass
+            # returns a list of True and false values per run
+            to_return = self.normalise_by_kit(input_file, line, column_index)
         else:
-            to_return.append(float(line.split("\t")[column_index]))
+            to_return = float(line.split("\t")[column_index])
         return to_return
 
-    def get_github_file(self, github_repo, file):
+    def normalise_by_kit(self, input_file, line, column_index):
         """
-        Creates a temporary dir, clones into that dir, copies the desired file from that dir, and removes the temporary dir.
+        Calculates the upper and lower bound for that kit or runtype and outputs a True or False value for the line
+        dependent upon whether the value on that line is within the bounds.
+            :param input_file:      (str) name of raw data file (multiqc output file)
+            :param line:            (str) one line from the input file
+            :param column_index:    (int) index of the column of interest that contains the relevant data for
+                                            plotting
+            :return to_return:      (boolean) True or False values.
         """
-        t = tempfile.mkdtemp()
-        git.Repo.clone_from(github_repo, t, branch='Production', depth=1)
-        shutil.move(os.path.join(t, file), os.path.join(os.getcwd(), file))
-        shutil.rmtree(t)
+        to_return = []
+        if "WES" in line:
+            panel_list = False
+            upper_bound, lower_bound = self.calculate_bounds(input_file, panel_list, 20, column_index)
+            if lower_bound <= float(line.split("\t")[column_index]) <= upper_bound:
+                to_return = True
+            else:
+                to_return = False
+        else:
+            # runtype is PANEL and needs normalisation
+            for capture_kit in self.panel_dict:
+                upper_bound, lower_bound = self.calculate_bounds(input_file, self.panel_dict[capture_kit],
+                                                                 20, column_index)
+                if any(pan_number in line for pan_number in self.panel_dict[capture_kit]):
+                    if lower_bound <= float(line.split("\t")[column_index]) <= upper_bound:
+                        to_return = True
+                    else:
+                        to_return = False
+        return to_return
+
+    def calculate_bounds(self, input_file, panel_list, percentage, column_index):
+        """
+        Calculate upper and lower bound for that panel list and input file. Achieved by calculating the average of a
+        set of data (skipping blank and header lines (starts with 'sample')). Then the values within which 20% of the
+        data falls within above and below that average. Assign these as upper and lower bounds.
+
+        :param input_file:                  (str) name of raw data file (multiqc output file)
+        :param panel_list:                  (list) list of of panel numbers
+        :param percentage:                  (int) percentage value
+        :param column_index:                (int) index of the column of interest that contains the relevant data for
+                                                  plotting
+        :return upper_bound, lower_bound:   (int or boolean) Upper and lower bound values, or True or False values.
+        """
+        lst = []
+        for linecount, line in enumerate(input_file):
+            # if panel list is not false (so is a custom panels run), normalise by kit
+            if panel_list:
+                # if panel numbers are in the sample names, append value to list for normalisation
+                if any(pan_number in line.split("\t")[1] for pan_number in panel_list):
+                    lst.append(float(line.split("\t")[column_index]))
+            else:
+                lst.append(float(line.split("\t")[column_index]))
+        if lst:
+            average = sum(lst) / len(lst)
+            percentage = ((max(lst) - min(lst)) * (percentage/100))
+            upper_bound = average + percentage
+            lower_bound = average - percentage
+        else:
+            # if list is false, return false values
+            upper_bound = lower_bound = False
+        return upper_bound, lower_bound
 
 
 class Emails(object):
@@ -551,19 +614,21 @@ class Emails(object):
         if self.runtype == "SWIFT":
             recipients = [self.oncology_ops_email, self.mokaguys_email]
 
-        m = Message()
-        m["X-Priority"] = str("3")
-        m["Subject"] = self.email_subject.format(place_holder_values["run_list"])
-        m['To'] = ", ".join(recipients)
-        m['From'] = config.sender
-        m.set_payload(message_body)
+        if self.runtype in ["WES", "PANEL", "SWIFT"]:
+            m = Message()
+            m["X-Priority"] = str("3")
+            m["Subject"] = self.email_subject.format(place_holder_values["run_list"])
+            m['To'] = ", ".join(recipients)
+            m['From'] = config.general_config["general"]["sender"]
+            m.set_payload(message_body)
 
-        server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
-        server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
-        server.starttls()
-        server.ehlo()
-        server.login(config.user, config.pw)
-        server.sendmail(config.sender, recipients, m.as_string())
+            server = smtplib.SMTP(host=config.general_config["general"]["host"],
+                                  port=config.general_config["general"]["port"], timeout=10)
+            server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
+            server.starttls()
+            server.ehlo()
+            server.login(config.user, config.pw)
+            server.sendmail(config.general_config["general"]["sender"], recipients, m.as_string())
         return
 
     def create_email_logfile(self, new_runs):
@@ -684,7 +749,8 @@ def main():
     args = arg_parse()
     # get class inputs from config file
     inputs = get_inputs(args)
-
+    panel_dict = get_panel_dict(github_repo="https://github.com/moka-guys/automate_demultiplex",
+                                github_file="automate_demultiplex_config.py")
     # If run in development mode, or if run in production mode AND a run has been uploaded since the script was last run
     # create instance of TrendReport class, retrieve methods of TrendReport class
     # then call call_tools (member function of TrendReport instance) to generate the trend report
@@ -692,12 +758,10 @@ def main():
     if args.dev or check_for_update():
         for runtype in inputs["run_types"]:
             t = TrendReport(input_folder=inputs["input_folder"], output_folder=inputs["output_folder"],
-                            images_folder=inputs["images_folder"], runtype=runtype,
+                            images_folder=inputs["images_folder"], runtype=runtype, panel_dict=panel_dict,
                             template_dir=inputs["template_dir"], archive_folder=inputs["archive_folder"],
                             logopath=inputs["logopath"], plot_order=inputs["plot_order"],
-                            wkhtmltopdf_path=inputs["wkhtmltopdf_path"],
-                            github_repo="https://github.com/moka-guys/automate_demultiplex",
-                            github_file="automate_demultiplex_config.py")
+                            wkhtmltopdf_path=inputs["wkhtmltopdf_path"])
             methods = inspect.getmembers(t, predicate=inspect.ismethod)
             t.call_tools(methods)
             e = Emails(input_folder=inputs["input_folder"], runtype=runtype, wes_email=inputs["wes_email"],
