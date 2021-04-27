@@ -438,17 +438,17 @@ tool_settings = {
         "calculation": "divide_by_1000",
         "plot_title": "MiSeq Lane cluster density",
         "plot_text": "MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
-                     "per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq is 1200-1400 \n"
-                     "K/mm2. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR \n"
-                     "beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median \n"
-                     "is displayed as an orange line",
+                     "per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq has not been \n"
+                     "specified. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * \n"
+                     "IQR beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. \n"
+                     "Median is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
         "upper_lim_linecolour": 'r',
-        "upper_lim": 1400,
+        "upper_lim": False,
         "upper_lim_label": "Upper optimal density bound",
-        "lower_lim": 1200,
+        "lower_lim": False,
         "lower_lim_label": "Lower optimal density bound",
         "report_type": {
             "WES": False,
@@ -472,17 +472,17 @@ tool_settings = {
         "calculation": "divide_by_1000",
         "plot_title": "NextSeq Lane cluster density",
         "plot_text": "NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
-                     "per mm2 of flowcell area for each sequencing lane. Optimal density for NextSeq is 170-230  \n"
-                     "K/mm2. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR \n"
-                     "beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median \n"
-                     "is displayed as an orange line",
+                     "per mm2 of flowcell area for each sequencing lane. 290 K/mm2 is the upper cluster density \n"
+                     "cut-off above which Q30 data should be examined. Boxes display the inter-quartile range \n"
+                     "(25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as \n"
+                     "circles, and are data beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
         "upper_lim_linecolour": 'r',
-        "upper_lim": 230,
+        "upper_lim": 290,
         "upper_lim_label": "Upper optimal density bound",
-        "lower_lim": 170,
+        "lower_lim": False,
         "lower_lim_label": "Lower optimal density bound",
         "report_type": {
             "WES": "NB551068, NB552085",
@@ -506,10 +506,10 @@ tool_settings = {
         "calculation": "divide_by_1000",
         "plot_title": "NovaSeq Lane cluster density",
         "plot_text": "NovaSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
-                     "per mm2 of flowcell area for each sequencing lane. Optimal density for NovaSeq is ___ - ___ \n"
-                     "K/mm2. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR \n"
-                     "beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median \n"
-                     "is displayed as an orange line",
+                     "per mm2 of flowcell area for each sequencing lane. There is currently no cluster density \n"
+                     "cut-off for the NovaSeq. Boxes display the inter-quartile range (25th-75th percentile). \n"
+                     "Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as circles, and are data \n"
+                     "beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
