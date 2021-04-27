@@ -72,8 +72,9 @@ def get_panel_dict(github_repo, github_file):
         for line in github_file:
             for panel_list in ["vcp1_panel_list", "vcp2_panel_list", "vcp3_panel_list"]:
                 if line.startswith("{}".format(panel_list)):
-                    panel_dict[panel_list] = (line.split('[')[1].strip()).split(']')[0].strip().split(", ")
-        return panel_dict
+                    panel_dict[panel_list] = (line.replace("\"","").split('[')[1].strip()).split(']')[0].strip().split(",")
+    print(panel_dict)
+    return panel_dict
 
 
 def get_github_file(github_repo, github_file):
@@ -222,14 +223,11 @@ class TrendReport(object):
         Generate the image path using return_image_paths function and save figure at this location
         """
         plt.close()
-        # .apply(pd.value_counts) counts the number of 'True' and 'False' results per sample
-        if tool == "peddy_sex_check":
-            df = pd.DataFrame.from_dict(self.dictionary[tool], orient='index').apply(pd.value_counts, axis=1).T
-        elif tool == "fastq_total_sequences":
-            df = pd.DataFrame.from_dict(self.dictionary[tool], orient='columns').apply(pd.value_counts, axis=0)
+        print(self.dictionary[tool])
+        df = pd.DataFrame.from_dict(self.dictionary[tool], orient='index').apply(pd.value_counts, axis=1).T
         # replaces run names with x axis labels
         df.columns = self.x_labels(tool)
-        df.plot.bar(rot=0)
+        df.T.plot.bar(stacked=True)
         plt.xticks()
         plt.legend(bbox_to_anchor=(1.05, 1.0), loc='upper left')
         plt.ticklabel_format(axis='y', useOffset=False, style='plain')
@@ -425,15 +423,19 @@ class TrendReport(object):
         Then for each remaining line, split the line, pull out the column of interest and add to a list.
         If and else statements deal with different formats of different input files.
         """
-        identifier_list = "#", "Sample", "CLUSTER_DENSITY"
+        identifier_tuple = ("#", "Sample", "CLUSTER_DENSITY")
         to_return = []
+        input_file_list = []
         with open(file_path, 'r') as input_file:
             column_index = self.return_column_index(input_file, tool)
-            for linecount, line in enumerate(input_file):
+            
+            for line in input_file.readlines():
                 # skips blank lines, header lines (start with 'Sample' or "CLUSTER_DENSITY")
                 # lines beginning with hashes (commented out lines, do not contain data)
-                if line.split("\t")[column_index] and not (line.isspace() or line.startswith(identifier_list)):
-                    to_return.append(self.calculate_measurement(input_file, line, column_index, tool))
+                if line.split("\t")[column_index] and not (line.isspace() or line.startswith(identifier_tuple)):
+                    input_file_list.append(line)
+            for line in input_file_list:
+                to_return.append(self.calculate_measurement(input_file_list, line, column_index, tool))
         return to_return
 
     def calculate_measurement(self, input_file, line, column_index, tool):
@@ -444,7 +446,7 @@ class TrendReport(object):
         exclusion of blank elements, as not every line contains sex check data. fastq_total_sequences requires
         calculation of samples that fall within +/- 20% of the average for the run (PANEL runtypes require normalisation
         by capture kit). All other plots no calculation required
-            :param input_file:      (str) name of raw data file (multiqc output file)
+            :param input_file:      (str) path to raw data file (multiqc output file)
             :param line:            (str) one line from the input file
             :param column_index:    (int) index of the column of interest that contains the relevant data for plotting
             :param tool:            (str) tool name - allows access to tool specific config settings
@@ -470,16 +472,18 @@ class TrendReport(object):
         """
         Calculates the upper and lower bound for that kit or runtype and outputs a True or False value for the line
         dependent upon whether the value on that line is within the bounds.
-            :param input_file:      (str) name of raw data file (multiqc output file)
+            :param input_file:      (str) path of raw data file (multiqc output file)
             :param line:            (str) one line from the input file
             :param column_index:    (int) index of the column of interest that contains the relevant data for
                                             plotting
             :return to_return:      (boolean) True or False values.
         """
-        to_return = []
+
+        upper_bound = lower_bound = None
+        #TODO use automate demultiplex config wes list
         if "WES" in line:
-            panel_list = False
-            upper_bound, lower_bound = self.calculate_bounds(input_file, panel_list, 20, column_index)
+            capture_kit = False
+            upper_bound, lower_bound = self.calculate_bounds(input_file, capture_kit, 0.20, column_index)
             if lower_bound <= float(line.split("\t")[column_index]) <= upper_bound:
                 to_return = True
             else:
@@ -487,42 +491,46 @@ class TrendReport(object):
         else:
             # runtype is PANEL and needs normalisation
             for capture_kit in self.panel_dict:
-                upper_bound, lower_bound = self.calculate_bounds(input_file, self.panel_dict[capture_kit],
-                                                                 20, column_index)
                 if any(pan_number in line for pan_number in self.panel_dict[capture_kit]):
+                    upper_bound, lower_bound = self.calculate_bounds(input_file, capture_kit, 0.20, column_index)
+                # if the sample is from a pan number in the list
+                if None not in (upper_bound, lower_bound):
                     if lower_bound <= float(line.split("\t")[column_index]) <= upper_bound:
                         to_return = True
                     else:
                         to_return = False
+                # return None to show that this sample hasn't been assessed (different to true or false value)
+                else:
+                    to_return = None
         return to_return
 
-    def calculate_bounds(self, input_file, panel_list, percentage, column_index):
+    def calculate_bounds(self, input_file_list, capture_kit, percentage, column_index):
         """
         Calculate upper and lower bound for that panel list and input file. Achieved by calculating the average of a
         set of data (skipping blank and header lines (starts with 'sample')). Then the values within which 20% of the
         data falls within above and below that average. Assign these as upper and lower bounds.
 
-        :param input_file:                  (str) name of raw data file (multiqc output file)
-        :param panel_list:                  (list) list of of panel numbers
+        :param input_file:                  (str) path of raw data file (multiqc output file)
+        :param capture_kit:                 (str) Name of capture kit
         :param percentage:                  (int) percentage value
         :param column_index:                (int) index of the column of interest that contains the relevant data for
                                                   plotting
         :return upper_bound, lower_bound:   (int or boolean) Upper and lower bound values, or True or False values.
         """
-        lst = []
-        for linecount, line in enumerate(input_file):
+        list = []
+        #TODO capture kit not working
+        for line in input_file_list:
             # if panel list is not false (so is a custom panels run), normalise by kit
-            if panel_list:
+            if capture_kit:
                 # if panel numbers are in the sample names, append value to list for normalisation
-                if any(pan_number in line.split("\t")[1] for pan_number in panel_list):
-                    lst.append(float(line.split("\t")[column_index]))
+                if any(pan_number in line.split("\t")[0] for pan_number in self.panel_dict[capture_kit]):
+                    list.append(float(line.split("\t")[column_index]))
             else:
-                lst.append(float(line.split("\t")[column_index]))
-        if lst:
-            average = sum(lst) / len(lst)
-            percentage = ((max(lst) - min(lst)) * (percentage/100))
-            upper_bound = average + percentage
-            lower_bound = average - percentage
+                list.append(float(line.split("\t")[column_index]))
+        if list:
+            average = sum(list) / len(list)
+            upper_bound = average * (1.0+percentage)
+            lower_bound = average * (1.0-percentage)
         else:
             # if list is false, return false values
             upper_bound = lower_bound = False
