@@ -19,14 +19,14 @@ with open(pw_file, "r") as email_password_file:
 # General settings are those that are applicable when running the script in production and development
 # Production settings are those that are only used when the script is run in production
 # Development settings are those that are only used when the script is run during development
-# Separate development and production settings ensure that the live MultiQC reports are not
-# inadvertently updated during development work.
+# Separate development and production settings ensure that the live MultiQC reports are not inadvertently updated
+# during development work.
 
 # General ---------------------------------------------------------------------------------------
 # run_frequency:               Frequency (hours) the script runs (via cron). Defines window within which index.html
-#                              File must fall to trigger a new trend analysis
+#                              file must fall to trigger a new trend report to be generated
 # number_of_runs_to_include:   The x most recent runs
-# run_types:                   Panels and individual sequencers
+# run_types:                   Run types and sequencer types
 # wkhtmltopdf_path:            Path to html conversion utility
 # plot_order:                  Order of plots in report (top to bottom). Only plots in this list are included
 # logopath:                    Path to viapath logo
@@ -38,7 +38,7 @@ with open(pw_file, "r") as email_password_file:
 
 # Production/development -------------------------------------------------------------------------
 # index_file:                  Path to the index.html file (used for the main trend analysis homepage)
-# input_folder:                Path to directory containing individual run folders (these contain per-run mutliqc files)
+# input_folder:                Path to directory containing individual run folders (these contain per-run multiqc files)
 # output_folder:               Path to save location for html trend reports and archive_index.html
 # images_folder:               Path to viapath logo and plot save location
 # template_dir:                Path to html templates
@@ -92,7 +92,8 @@ general_config = {"general": {"run_frequency": 2,
                                   "input_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/test_multiqc_data",
                                   "output_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis",
                                   "images_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/images/",
-                                  "template_dir": "/usr/local/src/mokaguys/development_area/trend_analysis/html_template",
+                                  "template_dir":
+                                      "/usr/local/src/mokaguys/development_area/trend_analysis/html_template",
                                   "archive_folder": "/var/www/html/mokaguys/dev/multiqc/trend_analysis/archive",
                                   "reports_hyperlink": "https://genomics.viapath.co.uk/mokaguys/dev/multiqc/",
                                   "wes_email": "gst-tr.mokaguys@nhs.net",
@@ -105,9 +106,7 @@ general_config = {"general": {"run_frequency": 2,
 
 # ==== TOOL-SPECIFIC SETTINGS ================================================================
 
-# Contains config settings per plot (run_names, picard_insertsize, q30_percent, target_bases_at_30X,
-# target_bases_at_20X, on_target_vs_selected, contamination, cluster_density_MiSeq, cluster_density_NextSeq,
-# cluster_density_NovaSeq, properly_paired, pct_off_amplicon, fastq_total_sequences, peddy_sex_check
+# Contains config settings per plot (see plot_order list for full list of plots). Each plot is a dictionary key
 
 # function:                 Specifies the function in read_qc_files.py to be applied for the tool
 # plot_type:                Names the plot type for recognition by read_qc_files.py
@@ -124,9 +123,9 @@ general_config = {"general": {"run_frequency": 2,
 # lower_lim_label:          Label text for lower limit line
 # report_type:              Sub-dictionary containing the report types and sequencer identifiers for filtering
 #                           Sub dictionary values are False if plot is not required for this report type.
-#   WES:                    Sequencer options are: "NB551068, NB552085, A01229" sequencers
+#   WES:                    Sequencer options are: "NB551068, NB552085, A01229"
 #   PANEL:                  Sequencer options are: "NB551068, NB552085"
-#   SWIFT:                  Sequencer options are: "M02631"
+#   SWIFT:                  Sequencer options are: "M02631, M02353"
 #   NEXTSEQ_LUIGI:          Sequencer options are: "NB552085"
 #   NEXTSEQ_MARIO:          Sequencer options are: "NB551068"
 #   MISEQ_ONC:              Sequencer options are: "M02353"
@@ -155,7 +154,7 @@ tool_settings = {
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
             "PANEL": "NB551068, NB552085",
-            "SWIFT": "M02631",
+            "SWIFT":  "M02631, M02353",
             "NEXTSEQ_LUIGI": "NB552085",
             "NEXTSEQ_MARIO": "NB551068",
             "MISEQ_ONC": "M02353",
@@ -173,9 +172,9 @@ tool_settings = {
         "column_of_interest": "MEAN_INSERT_SIZE",
         "calculation": False,
         "plot_title": "Picard Insert Sizes",
-        "plot_text": "Boxplots showing the range and spread of insert sizes. This will highlight DNA fragmentation. \n"
-                     "Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond \n"
-                     "the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median is \n"
+        "plot_text": "Boxplots showing the range and spread of insert sizes. This will highlight DNA fragmentation. "
+                     "Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond "
+                     "the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median is "
                      "displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "solid",
@@ -206,9 +205,9 @@ tool_settings = {
         "column_of_interest": "percent_Q30",
         "calculation": False,
         "plot_title": "BCL2Fastq Q30 percentage",
-        "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane.\n "
-                     "This shows how well the base calling has performed on the sequencer. Boxes display the inter-\n"
-                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are \n"
+        "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane. "
+                     "This shows how well the base calling has performed on the sequencer. Boxes display the inter-"
+                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
                      "displayed as circles, and are data beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
@@ -239,9 +238,9 @@ tool_settings = {
         "column_of_interest": "percent_Q30",
         "calculation": False,
         "plot_title": "BCL2Fastq Q30 percentage",
-        "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane.\n "
-                     "This shows how well the base calling has performed on the sequencer. Boxes display the inter-\n"
-                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are \n"
+        "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane. "
+                     "This shows how well the base calling has performed on the sequencer. Boxes display the inter-"
+                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
                      "displayed as circles, and are data beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "solid",
@@ -272,9 +271,9 @@ tool_settings = {
         "column_of_interest": "percent_Q30",
         "calculation": False,
         "plot_title": "BCL2Fastq Q30 percentage",
-        "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane.\n "
-                     "This shows how well the base calling has performed on the sequencer. Boxes display the inter-\n"
-                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are \n"
+        "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane. "
+                     "This shows how well the base calling has performed on the sequencer. Boxes display the inter-"
+                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
                      "displayed as circles, and are data beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "solid",
@@ -305,9 +304,9 @@ tool_settings = {
         "column_of_interest": "PCT_TARGET_BASES_30X",
         "calculation": "convert_to_percent",
         "plot_title": "target_bases_at_30X",
-        "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 30X. Boxes display\n"
-                     " the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. \n"
-                     "Outliers are displayed as circles, and are data beyond the whiskers. Median is displayed as an \n"
+        "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 30X. Boxes display"
+                     " the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. "
+                     "Outliers are displayed as circles, and are data beyond the whiskers. Median is displayed as an "
                      "orange line",
         "upper_lim_linestyle": "dashed",
         "lower_lim_linestyle": "solid",
@@ -338,10 +337,10 @@ tool_settings = {
         "column_of_interest": "PCT_TARGET_BASES_20X",
         "calculation": "convert_to_percent",
         "plot_title": "Target Bases at 20X",
-        "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 20X. Samples \n"
-                     "below 90% are failed. Samples above 95% pass. Samples between 90-95% may be analysed with \n"
-                     "caution. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR \n"
-                     " the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median is \n"
+        "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 20X. Samples "
+                     "below 90% are failed. Samples above 95% pass. Samples between 90-95% may be analysed with "
+                     "caution. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR "
+                     " the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median is "
                      "displayed as an orange line",
         "upper_lim_linestyle": "dashed",
         "lower_lim_linestyle": "solid",
@@ -372,9 +371,9 @@ tool_settings = {
         "column_of_interest": "ON_BAIT_VS_SELECTED",
         "calculation": False,
         "plot_title": "On target vs selected",
-        "plot_text": "The % of on and near bait bases that are on as opposed to near (as defined by the BED file \n"
-                     "containing the capture regions). Boxes display the inter-quartile range (25th-75th percentile).\n"
-                     " Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as circles, and are data \n"
+        "plot_text": "The % of on and near bait bases that are on as opposed to near (as defined by the BED file "
+                     "containing the capture regions). Boxes display the inter-quartile range (25th-75th percentile)."
+                     " Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as circles, and are data "
                      "beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
@@ -405,8 +404,8 @@ tool_settings = {
         "column_of_interest": "FREEMIX",
         "calculation": "convert_to_percent",
         "plot_title": "Contamination",
-        "plot_text": "The contamination estimate as calculated by VerifyBAMID (FREEMIX). A sample is considered \n"
-                     "contaminated when FREEMIX > 0.03. Outliers are displayed as circles, median as orange line, \n"
+        "plot_text": "The contamination estimate as calculated by VerifyBAMID (FREEMIX). A sample is considered "
+                     "contaminated when FREEMIX > 0.03. Outliers are displayed as circles, median as orange line, "
                      "IQR as box",
         "lower_lim_linestyle": "",
         "upper_lim_linestyle": "solid",
@@ -437,23 +436,23 @@ tool_settings = {
         "column_of_interest": "## htsjdk.samtools.metrics.StringHeader",
         "calculation": "divide_by_1000",
         "plot_title": "MiSeq Lane cluster density",
-        "plot_text": "MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
-                     "per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq has not been \n"
-                     "specified. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * \n"
-                     "IQR beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. \n"
+        "plot_text": "MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
+                     "per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq has not been "
+                     "specified. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * "
+                     "IQR beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. "
                      "Median is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
         "upper_lim_linecolour": 'r',
         "upper_lim": False,
-        "upper_lim_label": "Upper optimal density bound",
+        "upper_lim_label": False,
         "lower_lim": False,
-        "lower_lim_label": "Lower optimal density bound",
+        "lower_lim_label": False,
         "report_type": {
             "WES": False,
             "PANEL": False,
-            "SWIFT": "M02631",
+            "SWIFT": "M02631, M02353",
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
@@ -471,10 +470,10 @@ tool_settings = {
         "column_of_interest": "## htsjdk.samtools.metrics.StringHeader",
         "calculation": "divide_by_1000",
         "plot_title": "NextSeq Lane cluster density",
-        "plot_text": "NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
-                     "per mm2 of flowcell area for each sequencing lane. 290 K/mm2 is the upper cluster density \n"
-                     "cut-off above which Q30 data should be examined. Boxes display the inter-quartile range \n"
-                     "(25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as \n"
+        "plot_text": "NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
+                     "per mm2 of flowcell area for each sequencing lane. 290 K/mm2 is the upper cluster density "
+                     "cut-off above which Q30 data should be examined. Boxes display the inter-quartile range "
+                     "(25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as "
                      "circles, and are data beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
@@ -483,7 +482,7 @@ tool_settings = {
         "upper_lim": 290,
         "upper_lim_label": "Upper optimal density bound",
         "lower_lim": False,
-        "lower_lim_label": "Lower optimal density bound",
+        "lower_lim_label": False,
         "report_type": {
             "WES": "NB551068, NB552085",
             "PANEL": "NB551068, NB552085",
@@ -505,19 +504,19 @@ tool_settings = {
         "column_of_interest": "## htsjdk.samtools.metrics.StringHeader",
         "calculation": "divide_by_1000",
         "plot_title": "NovaSeq Lane cluster density",
-        "plot_text": "NovaSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters \n"
-                     "per mm2 of flowcell area for each sequencing lane. There is currently no cluster density \n"
-                     "cut-off for the NovaSeq. Boxes display the inter-quartile range (25th-75th percentile). \n"
-                     "Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as circles, and are data \n"
+        "plot_text": "NovaSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
+                     "per mm2 of flowcell area for each sequencing lane. There is currently no cluster density "
+                     "cut-off for the NovaSeq. Boxes display the inter-quartile range (25th-75th percentile). "
+                     "Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as circles, and are data "
                      "beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
         "upper_lim_linecolour": 'r',
         "upper_lim": False,
-        "upper_lim_label": "Upper optimal density bound",
+        "upper_lim_label": False,
         "lower_lim": False,
-        "lower_lim_label": "Lower optimal density bound",
+        "lower_lim_label": False,
         "report_type": {
             "WES": "A01229",
             "PANEL": False,
@@ -539,10 +538,10 @@ tool_settings = {
         "column_of_interest": "properly paired_passed_pct",
         "calculation": "remove_negative_controls",
         "plot_title": "Properly Paired",
-        "plot_text": "The percentage of QC-passed reads that were properly paired. Properly paired = both mates of a \n"
-                     "read pair map to the same chromosome, oriented towards one another, with a sensible insert \n"
-                     "size. Note, the negative control is NOT included in this plot. Boxes display the inter-\n"
-                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are \n"
+        "plot_text": "The percentage of QC-passed reads that were properly paired. Properly paired = both mates of a "
+                     "read pair map to the same chromosome, oriented towards one another, with a sensible insert "
+                     "size. Note, the negative control is NOT included in this plot. Boxes display the inter-"
+                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
                      "displayed as circles, and are data beyond the whiskers. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
@@ -555,7 +554,7 @@ tool_settings = {
         "report_type": {
             "WES": False,
             "PANEL": False,
-            "SWIFT": "M02631",
+            "SWIFT":  "M02631, M02353",
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
@@ -573,10 +572,10 @@ tool_settings = {
         "column_of_interest": "PCT_OFF_AMPLICON",
         "calculation": "remove_negative_controls",
         "plot_title": "Percentage of Off Amplicon Bases",
-        "plot_text": "The percentage of aligned passing filter (PF) bases that mapped neither on or near an \n"
-                     "amplicon. This is a measure of primer specificity. Note, the negative control is  NOT included \n"
-                     "in this plot. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 \n"
-                     "* IQR beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. \n"
+        "plot_text": "The percentage of aligned passing filter (PF) bases that mapped neither on or near an "
+                     "amplicon. This is a measure of primer specificity. Note, the negative control is  NOT included "
+                     "in this plot. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 "
+                     "* IQR beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. "
                      "Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
@@ -589,7 +588,7 @@ tool_settings = {
         "report_type": {
             "WES": False,
             "PANEL": False,
-            "SWIFT": "M02631",
+            "SWIFT":  "M02631, M02353",
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
             "MISEQ_ONC": False,
@@ -607,9 +606,10 @@ tool_settings = {
         "column_of_interest": "Total Sequences",
         "calculation": "normalise_by_capture_kit",
         "plot_title": "Fastq Total Sequences",
-        "plot_text": "Boxplot showing the total number of sequences. Boxes display the inter-quartile range \n"
-                     "(25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as \n"
-                     "circles, and are data beyond the whiskers. Median is displayed as an orange line",
+        "plot_text": "Boxplot showing the proportion of samples in the run with total sequence number that falls "
+                     "within 20% of the average for that run (for Custom Panels runs this is normalised by capture "
+                     "kit). 'True' represents samples that fall within 20% of the average, 'False' represents samples "
+                     "that do not",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
@@ -639,9 +639,9 @@ tool_settings = {
         "column_of_interest": "error_sex_check",
         "calculation": "exclude_blank_elements",
         "plot_title": "Correct Sex",
-        "plot_text": "Number of sample names with incorrect sex per run. The output is 'True' if the sex encoded in "
-                     "the sample name matches that predicted by peddy. It is 'False' if it does not match the "
-                     "prediction. e.g. sample name sex 'unknown' and peddy prediction 'male' would be 'False'.",
+        "plot_text": "Proportion of sample names with incorrect sex per run. The output is 'True' if the sex encoded "
+                     "in the sample name matches that predicted by peddy. It is 'False' if it does not match the "
+                     "prediction. e.g. sample name sex 'unknown' and peddy prediction 'male' would be 'False'",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
