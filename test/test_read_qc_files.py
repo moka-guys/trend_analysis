@@ -10,7 +10,7 @@ except ImportError:
     import mock  # python 2.6-3.2
 
 
-def test_arg_parse_dev():
+def test_arg_parse():
     """
     Test that the argument parser works with and without the --dev command line argument.
     """

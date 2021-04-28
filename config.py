@@ -139,7 +139,7 @@ tool_settings = {
     "run_names": {
         "function": "describe_run_names",
         "plot_type": "table",
-        "plot_title": "Run names",
+        "plot_title": "Run Names",
         "plot_text": "These are the runs included on the below plots. Numbers are used to simplify the x axis labels "
                      "on the plots, so this table can be used to link the axis labels to run name",
         "calculation": False,
@@ -204,7 +204,7 @@ tool_settings = {
         "input_file": "multiqc_bcl2fastq_bylane.txt",
         "column_of_interest": "percent_Q30",
         "calculation": False,
-        "plot_title": "BCL2Fastq Q30 percentage",
+        "plot_title": "BCL2Fastq Q30 Percentage MiSeq",
         "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane. "
                      "This shows how well the base calling has performed on the sequencer. Boxes display the inter-"
                      "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
@@ -237,7 +237,7 @@ tool_settings = {
         "input_file": "multiqc_bcl2fastq_bylane.txt",
         "column_of_interest": "percent_Q30",
         "calculation": False,
-        "plot_title": "BCL2Fastq Q30 percentage",
+        "plot_title": "BCL2Fastq Q30 Percentage NextSeq",
         "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane. "
                      "This shows how well the base calling has performed on the sequencer. Boxes display the inter-"
                      "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
@@ -270,7 +270,7 @@ tool_settings = {
         "input_file": "multiqc_bcl2fastq_bylane.txt",
         "column_of_interest": "percent_Q30",
         "calculation": False,
-        "plot_title": "BCL2Fastq Q30 percentage",
+        "plot_title": "BCL2Fastq Q30 percentage NovaSeq",
         "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane. "
                      "This shows how well the base calling has performed on the sequencer. Boxes display the inter-"
                      "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
@@ -303,7 +303,7 @@ tool_settings = {
         "input_file": "multiqc_picard_HsMetrics.txt",
         "column_of_interest": "PCT_TARGET_BASES_30X",
         "calculation": "convert_to_percent",
-        "plot_title": "target_bases_at_30X",
+        "plot_title": "Target Bases at 30X",
         "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 30X. Boxes display"
                      " the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. "
                      "Outliers are displayed as circles, and are data beyond the whiskers. Median is displayed as an "
@@ -370,7 +370,7 @@ tool_settings = {
         "input_file": "multiqc_picard_HsMetrics.txt",
         "column_of_interest": "ON_BAIT_VS_SELECTED",
         "calculation": False,
-        "plot_title": "On target vs selected",
+        "plot_title": "On Target vs Selected",
         "plot_text": "The % of on and near bait bases that are on as opposed to near (as defined by the BED file "
                      "containing the capture regions). Boxes display the inter-quartile range (25th-75th percentile)."
                      " Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as circles, and are data "
@@ -435,7 +435,7 @@ tool_settings = {
         "input_file": "illumina_lane_metrics",
         "column_of_interest": "## htsjdk.samtools.metrics.StringHeader",
         "calculation": "divide_by_1000",
-        "plot_title": "MiSeq Lane cluster density",
+        "plot_title": "MiSeq Lane Cluster Density",
         "plot_text": "MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
                      "per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq has not been "
                      "specified. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * "
@@ -469,7 +469,7 @@ tool_settings = {
         "input_file": "illumina_lane_metrics",
         "column_of_interest": "## htsjdk.samtools.metrics.StringHeader",
         "calculation": "divide_by_1000",
-        "plot_title": "NextSeq Lane cluster density",
+        "plot_title": "NextSeq Lane Cluster Density",
         "plot_text": "NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
                      "per mm2 of flowcell area for each sequencing lane. 290 K/mm2 is the upper cluster density "
                      "cut-off above which Q30 data should be examined. Boxes display the inter-quartile range "
@@ -503,7 +503,7 @@ tool_settings = {
         "input_file": "illumina_lane_metrics",
         "column_of_interest": "## htsjdk.samtools.metrics.StringHeader",
         "calculation": "divide_by_1000",
-        "plot_title": "NovaSeq Lane cluster density",
+        "plot_title": "NovaSeq Lane Cluster Density",
         "plot_text": "NovaSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
                      "per mm2 of flowcell area for each sequencing lane. There is currently no cluster density "
                      "cut-off for the NovaSeq. Boxes display the inter-quartile range (25th-75th percentile). "
