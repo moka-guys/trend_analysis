@@ -36,30 +36,30 @@ Development mode provides alternative paths/inputs within the config file to pre
 ### Run/sequencer types
 Runs are categorised by run type and sequencer by the script, which checks for the following identifiers in the run name:
 
-| Run type | Run name |
+| Run type | Identifiers in run name |
 | ----------|-----------|
-| Custom Panels | Presence of "NGS" and "WES" |
-| SWIFT | Presence of "NGS" and absence of "WES" |
-| NextSeq (Luigi) | Presence of "NB552085" |
-| NextSeq (Mario) | Presence of "NB551068" |
-| MiSeq (Molecular Oncology) | Presence of "M02353" |
-| MiSeq (DNA Lab) | Presence of "M02631" |
-| NovaSeq (Pikachu) | Presence of "A01229" |
+| WES | "WES" |
+| Custom Panels | "NGS" and absence of "WES" |
+| SWIFT Panels | "ONC" |
+| NextSeq (Luigi) | "NB552085" |
+| NextSeq (Mario) | "NB551068" |
+| MiSeq (Molecular Oncology) | "M02353" |
+| MiSeq (DNA Lab) | "M02631" |
+| NovaSeq (Pikachu) | "A01229" |
 
 ### index.html 
-The index.html file contains links to the individual MultiQC reports, and to the WES, Custom Panels and SWIFT trend reports, and the archived reports. It also contains a link to a sequencers.html file which links to each sequencer-specific trend report.
+The index.html file contains links to the individual MultiQC reports, per run type trend reports, and archived reports. It also contains a link to a sequencers.html file which links to each sequencer-specific trend report.
 
 ### Steps
 #### Checking if new trend analysis is required
 * The index.html file is updated whenever a new multiqc report is uploaded
 * The date modified timestamp is assessed to see if it's within the last x hours (where x is the frequency the script is run - config.run_frequency)
+* Script is run if timestamp is more recent than the frequency the script is run 
 
 #### Create run type specific trend analysis plot
 * For each run type (defined in config.run_types)
 * Loop through the ordered list of tools (arranging the order of plots in trend report) that are relevant to the run type
-* The function used to parse the output (defined in the config file) is called. 
-* This should return a dictionary, where the key is the runfolder and the value a list of measurements
-* This data is then plotted using the plot type (defined in the config)
+* The function used to parse the output (defined in the config file) is called, which returns a dictionary which is then used to creae the plot using the plot type defined in the config
 * Plots can have upper and lower thresholds defined, with customisable colours/linestyles
 * Each plot has a title and a brief description
 * The plot is returned in a html block
