@@ -22,7 +22,7 @@ import time
 import importlib
 import tempfile
 import numpy as np
-
+import glob
 
 def arg_parse():
     """
@@ -329,15 +329,24 @@ class TrendReport(object):
 
     def generate_archive_html(self):
         """
-        Add created trend report as link to archive_index.html. Makes archived version accessible after live report
-        updated with more recent runs.
+        Add created trend report as link to archive_index.html - archived version accessible after live report updated
+        with more recent runs. Create list of all archived reports, sort by time last modified descending, cut
+        filepaths down to filenames, add links to html.
         """
         html_path = os.path.join(self.output_folder, "archive_index.html")
-        archive_directory = os.listdir(self.archive_folder)
+        report_pdfs = []
+        sorted_descending = []
+        for report in os.listdir(self.archive_folder):
+            report_pdfs.append(os.path.join(self.archive_folder, report))
+        sorted_by_mtime_descending = sorted(report_pdfs, key=lambda t: -os.stat(t).st_mtime)
+        for filepath in sorted_by_mtime_descending:
+            sorted_descending.append(filepath.rsplit("/", 1)[-1])
         with open(html_path, "wb") as html_file:
             html_file.write('<html><head align="center">ARCHIVED TREND ANALYSIS REPORTS</head><body><ul>')
-            html_file.writelines(['<li><a href="archive/%s">%s</a></li>' % (f, f) for f in archive_directory])
+            html_file.writelines(['<li><a href="archive/%s">%s</a></li>' % (f, f) for f in sorted_descending])
             html_file.write('</ul></body></html>')
+
+      #  sorted_by_mtime_descending = sorted(files, key=lambda t: -os.stat(t).st_mtime)
 
     def describe_run_names(self, tool):
         """
