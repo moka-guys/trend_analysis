@@ -402,10 +402,10 @@ tool_settings = {
         "plot_type": "box_plot",
         "input_file": "multiqc_verifybamid.txt",
         "column_of_interest": "FREEMIX",
-        "calculation": "convert_to_percent",
+        "calculation": False,
         "plot_title": "Contamination",
         "plot_text": "The contamination estimate as calculated by VerifyBAMID (FREEMIX). A sample is considered "
-                     "contaminated when FREEMIX > 0.03. Outliers are displayed as circles, median as orange line, "
+                     "contaminated when FREEMIX > 0.03%. Outliers are displayed as circles, median as orange line, "
                      "IQR as box",
         "lower_lim_linestyle": "",
         "upper_lim_linestyle": "solid",
