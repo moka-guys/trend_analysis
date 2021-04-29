@@ -165,9 +165,9 @@ tool_settings = {
         "calculation": False,
         "plot_title": "Picard Insert Sizes",
         "plot_text": "Boxplots showing the range and spread of insert sizes. This will highlight DNA fragmentation. "
-                     "Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond "
-                     "the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median is "
-                     "displayed as an orange line",
+                     "Boxes display the inter-quartile range (25th-75th percentile). Whiskers extend to the last data "
+                     "point that is less than 1.5*IQR away from the inter quartile range box. Any data past this point "
+                     "is an outlier, and represented as a circle. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": "r",
@@ -199,8 +199,9 @@ tool_settings = {
         "plot_title": "BCL2Fastq Q30 Percentage MiSeq",
         "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane. "
                      "This shows how well the base calling has performed on the sequencer. Boxes display the inter-"
-                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
-                     "displayed as circles, and are data beyond the whiskers. Median is displayed as an orange line",
+                     "quartile range (25th-75th percentile). Whiskers extend to the last data point that is less than "
+                     "1.5*IQR away from the inter quartile range box. Any data past this point is an outlier, and "
+                     "represented as a circle. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
@@ -232,8 +233,9 @@ tool_settings = {
         "plot_title": "BCL2Fastq Q30 Percentage NextSeq",
         "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane. "
                      "This shows how well the base calling has performed on the sequencer. Boxes display the inter-"
-                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
-                     "displayed as circles, and are data beyond the whiskers. Median is displayed as an orange line",
+                     "quartile range (25th-75th percentile). Whiskers extend to the last data point that is less than "
+                     "1.5*IQR away from the inter quartile range box. Any data past this point is an outlier, and "
+                     "represented as a circle. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": "r",
@@ -265,8 +267,9 @@ tool_settings = {
         "plot_title": "BCL2Fastq Q30 percentage NovaSeq",
         "plot_text": "Boxplots showing the percentage of bases >= Q30. Values within each boxplot are for each lane. "
                      "This shows how well the base calling has performed on the sequencer. Boxes display the inter-"
-                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
-                     "displayed as circles, and are data beyond the whiskers. Median is displayed as an orange line",
+                     "quartile range (25th-75th percentile). Whiskers extend to the last data point that is less than "
+                     "1.5*IQR away from the inter quartile range box. Any data past this point is an outlier, and "
+                     "represented as a circle. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": "r",
@@ -297,9 +300,9 @@ tool_settings = {
         "calculation": "convert_to_percent",
         "plot_title": "Target Bases at 30X",
         "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 30X. Boxes display"
-                     " the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. "
-                     "Outliers are displayed as circles, and are data beyond the whiskers. Median is displayed as an "
-                     "orange line",
+                     " the inter-quartile range (25th-75th percentile). Whiskers extend to the last data point that is "
+                     "less than 1.5*IQR away from the inter quartile range box. Any data past this point is an outlier,"
+                     " and represented as a circle. Median is displayed as an orange line",
         "upper_lim_linestyle": "dashed",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'r',
@@ -331,9 +334,9 @@ tool_settings = {
         "plot_title": "Target Bases at 20X",
         "plot_text": "Boxplot showing the % of bases in the target regions which are covered at >= 20X. Samples "
                      "below 90% are failed. Samples above 95% pass. Samples between 90-95% may be analysed with "
-                     "caution. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * IQR "
-                     " the boxes. Outliers are displayed as circles, and are data beyond the whiskers. Median is "
-                     "displayed as an orange line",
+                     "caution. Boxes display the inter-quartile range (25th-75th percentile). Whiskers extend to the "
+                     "last data point that is less than 1.5*IQR away from the inter quartile range box. Any data past "
+                     "this point is an outlier, and represented as a circle. Median is displayed as an orange line",
         "upper_lim_linestyle": "dashed",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'r',
@@ -364,9 +367,10 @@ tool_settings = {
         "calculation": False,
         "plot_title": "On Target vs Selected",
         "plot_text": "The % of on and near bait bases that are on as opposed to near (as defined by the BED file "
-                     "containing the capture regions). Boxes display the inter-quartile range (25th-75th percentile)."
-                     " Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as circles, and are data "
-                     "beyond the whiskers. Median is displayed as an orange line",
+                     "containing the capture regions). Boxes display the inter-quartile range (25th-75th percentile). "
+                     "Whiskers extend to the last data point that is less than 1.5*IQR away from the inter quartile "
+                     "range box. Any data past this point is an outlier, and represented as a circle. Median is "
+                     "displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
@@ -430,9 +434,9 @@ tool_settings = {
         "plot_title": "MiSeq Lane Cluster Density",
         "plot_text": "MiSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
                      "per mm2 of flowcell area for each sequencing lane. Optimal density for MiSeq has not been "
-                     "specified. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 * "
-                     "IQR beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. "
-                     "Median is displayed as an orange line",
+                     "specified. Boxes display the inter-quartile range (25th-75th percentile). Whiskers extend to the "
+                     "last data point that is less than 1.5*IQR away from the inter quartile range box. Any data past "
+                     "this point is an outlier, and represented as a circle. Median is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
@@ -465,8 +469,9 @@ tool_settings = {
         "plot_text": "NextSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
                      "per mm2 of flowcell area for each sequencing lane. 290 K/mm2 is the upper cluster density "
                      "cut-off above which Q30 data should be examined. Boxes display the inter-quartile range "
-                     "(25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as "
-                     "circles, and are data beyond the whiskers. Median is displayed as an orange line",
+                     "(25th-75th percentile). Whiskers extend to the last data point that is less than 1.5*IQR away "
+                     "from the inter quartile range box. Any data past this point is an outlier, and represented as a "
+                     "circle. Median is displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
@@ -499,8 +504,9 @@ tool_settings = {
         "plot_text": "NovaSeq sequencing run per-lane cluster density. Cluster density in thousands (K) of clusters "
                      "per mm2 of flowcell area for each sequencing lane. There is currently no cluster density "
                      "cut-off for the NovaSeq. Boxes display the inter-quartile range (25th-75th percentile). "
-                     "Whiskers are 1.5 * IQR beyond the boxes. Outliers are displayed as circles, and are data "
-                     "beyond the whiskers. Median is displayed as an orange line",
+                     "Whiskers extend to the last data point that is less than 1.5*IQR away from the inter quartile "
+                     "range box. Any data past this point is an outlier, and represented as a circle. Median is "
+                     "displayed as an orange line",
         "upper_lim_linestyle": "solid",
         "lower_lim_linestyle": "solid",
         "lower_lim_linecolour": 'b',
@@ -533,8 +539,9 @@ tool_settings = {
         "plot_text": "The percentage of QC-passed reads that were properly paired. Properly paired = both mates of a "
                      "read pair map to the same chromosome, oriented towards one another, with a sensible insert "
                      "size. Note, the negative control is NOT included in this plot. Boxes display the inter-"
-                     "quartile range (25th-75th percentile). Whiskers are 1.5 * IQR beyond the boxes. Outliers are "
-                     "displayed as circles, and are data beyond the whiskers. Median is displayed as an orange line",
+                     "quartile range (25th-75th percentile). Whiskers extend to the last data point that is less than "
+                     "1.5*IQR away from the inter quartile range box. Any data past this point is an outlier, and "
+                     "represented as a circle. Median is displayed as an orange line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
@@ -566,9 +573,10 @@ tool_settings = {
         "plot_title": "Percentage of Off Amplicon Bases",
         "plot_text": "The percentage of aligned passing filter (PF) bases that mapped neither on or near an "
                      "amplicon. This is a measure of primer specificity. Note, the negative control is  NOT included "
-                     "in this plot. Boxes display the inter-quartile range (25th-75th percentile). Whiskers are 1.5 "
-                     "* IQR beyond the boxes. Outliers are displayed as circles, and are data beyond the whiskers. "
-                     "Median is displayed as an orange line",
+                     "in this plot. Boxes display the inter-quartile range (25th-75th percentile). Whiskers extend to "
+                     "the last data point that is less than 1.5*IQR away from the inter quartile range box. Any data "
+                     "past this point is an outlier, and represented as a circle. Median is displayed as an orange "
+                     "line",
         "upper_lim_linestyle": "",
         "lower_lim_linestyle": "",
         "lower_lim_linecolour": "",
