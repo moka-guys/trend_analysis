@@ -456,7 +456,8 @@ class TrendReport(object):
         elif config.tool_settings[tool]["calculation"] == "convert_to_percent":
             to_return = float(line.split("\t")[column_index]) * 100
         elif config.tool_settings[tool]["calculation"] == "remove_negative_controls":
-            if "NTCcon" in line:
+            ntcon = ("NTCcon", "NTCCon")
+            if any(string in line for string in ntcon):
                 to_return = None
             else:
                 to_return = float(line.split("\t")[column_index])
