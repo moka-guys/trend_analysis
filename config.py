@@ -178,7 +178,7 @@ tool_settings = {
         "lower_lim_label": "Minimum insert size cut-off",
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
-            "CUSTOM_PANELS": "NB551068, NB552085",
+            "CUSTOM_PANELS": "NB551068, NB552085, A01229",
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -310,7 +310,7 @@ tool_settings = {
         "lower_lim_label": "90% at 30X",
         "report_type": {
             "WES": False,
-            "CUSTOM_PANELS": "NB551068, NB552085",
+            "CUSTOM_PANELS": "NB551068, NB552085, A01229",
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -377,7 +377,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
-            "CUSTOM_PANELS": "NB551068, NB552085",
+            "CUSTOM_PANELS": "NB551068, NB552085, A01229",
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -511,7 +511,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": "A01229",
-            "CUSTOM_PANELS": False,
+            "CUSTOM_PANELS": "A01229",
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -612,7 +612,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
-            "CUSTOM_PANELS": "NB551068, NB552085",
+            "CUSTOM_PANELS": "NB551068, NB552085, A01229",
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
