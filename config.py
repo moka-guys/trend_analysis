@@ -51,8 +51,8 @@ with open(pw_file, "r") as email_password_file:
 
 general_config = {"general": {"run_frequency": 2,
                               "number_of_runs_to_include": 5,
-                              "run_types": ["WES", "PANEL", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI", "MISEQ_ONC",
-                                            "MISEQ_DNA", "NOVASEQ_PIKACHU"],
+                              "run_types": ["WES", "CUSTOM_PANELS", "SWIFT", "NEXTSEQ_MARIO", "NEXTSEQ_LUIGI",
+                                            "MISEQ_ONC", "MISEQ_DNA", "NOVASEQ_PIKACHU"],
                               "wkhtmltopdf_path": "/usr/local/bin/wkhtmltopdf",
                               "plot_order": ["run_names", "q30_percent_MiSeq", "q30_percent_NextSeq",
                                              "q30_percent_NovaSeq", "picard_insertsize", "on_target_vs_selected",
@@ -65,15 +65,7 @@ general_config = {"general": {"run_frequency": 2,
                               "host": "email-smtp.eu-west-1.amazonaws.com",
                               "port": 587,
                               "sender": "moka.alerts@gstt.nhs.uk",
-                              "email_message": """
-                                                The MultiQC report is available for: 
-                                                {run_list}       
-
-                                                Trend analysis report has been updated to include these runs. 
-                                                Available at {hyperlink}.
-
-                                                Sent using trend_analysis {version} 
-                                                """
+                              "email_message": """The MultiQC report is available for: \n{run_list}\n\nTrend analysis report has been updated to include these runs.\nAvailable at {hyperlink}.\n\nSent using trend_analysis {version}"""
                               },
                   "production": {"index_file": "/var/www/html/mokaguys/multiqc/index.html",
                                  "input_folder": "/var/www/html/mokaguys/multiqc/trend_analysis/multiqc_data",
@@ -85,7 +77,7 @@ general_config = {"general": {"run_frequency": 2,
                                  "wes_email": "WES@viapath.co.uk",
                                  "oncology_ops_email": "m.neat@nhs.net",
                                  "custom_panels_email": "DNAdutyScientist@viapath.co.uk, dnadutytechlead@viapath.co.uk",
-                                 "email_subject": "MOKAPIPE ALERT : Finished pipeline for {} - MultiQC report "
+                                 "email_subject": "MOKAPIPE ALERT : Finished pipeline for {} runs - MultiQC report "
                                                   "available and trend analysis updated"
                                  },
                   "development": {"index_file": "/var/www/html/mokaguys/dev/multiqc/index.html",
@@ -124,7 +116,7 @@ general_config = {"general": {"run_frequency": 2,
 # report_type:              Sub-dictionary containing the report types and sequencer identifiers for filtering
 #                           Sub dictionary values are False if plot is not required for this report type.
 #   WES:                    Sequencer options are: "NB551068, NB552085, A01229"
-#   PANEL:                  Sequencer options are: "NB551068, NB552085"
+#   CUSTOM_PANELS:          Sequencer options are: "NB551068, NB552085"
 #   SWIFT:                  Sequencer options are: "M02631, M02353"
 #   NEXTSEQ_LUIGI:          Sequencer options are: "NB552085"
 #   NEXTSEQ_MARIO:          Sequencer options are: "NB551068"
@@ -153,7 +145,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
-            "PANEL": "NB551068, NB552085",
+            "CUSTOM_PANELS": "NB551068, NB552085",
             "SWIFT":  "M02631, M02353",
             "NEXTSEQ_LUIGI": "NB552085",
             "NEXTSEQ_MARIO": "NB551068",
@@ -186,7 +178,7 @@ tool_settings = {
         "lower_lim_label": "Minimum insert size cut-off",
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
-            "PANEL": "NB551068, NB552085",
+            "CUSTOM_PANELS": "NB551068, NB552085",
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -219,7 +211,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": False,
-            "PANEL": False,
+            "CUSTOM_PANELS": False,
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -252,7 +244,7 @@ tool_settings = {
         "lower_lim_label": "Minimum cut-off",
         "report_type": {
             "WES": False,
-            "PANEL": False,
+            "CUSTOM_PANELS": False,
             "SWIFT": False,
             "NEXTSEQ_LUIGI": "NB552085",
             "NEXTSEQ_MARIO": "NB551068",
@@ -285,7 +277,7 @@ tool_settings = {
         "lower_lim_label": "Minimum cut-off",
         "report_type": {
             "WES": False,
-            "PANEL": False,
+            "CUSTOM_PANELS": False,
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -318,7 +310,7 @@ tool_settings = {
         "lower_lim_label": "90% at 30X",
         "report_type": {
             "WES": False,
-            "PANEL": "NB551068, NB552085",
+            "CUSTOM_PANELS": "NB551068, NB552085",
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -352,7 +344,7 @@ tool_settings = {
         "lower_lim_label": "90% at 20X",
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
-            "PANEL": False,
+            "CUSTOM_PANELS": False,
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -385,7 +377,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
-            "PANEL": "NB551068, NB552085",
+            "CUSTOM_PANELS": "NB551068, NB552085",
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -417,7 +409,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
-            "PANEL": False,
+            "CUSTOM_PANELS": False,
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -451,7 +443,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": False,
-            "PANEL": False,
+            "CUSTOM_PANELS": False,
             "SWIFT": "M02631, M02353",
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -485,7 +477,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": "NB551068, NB552085",
-            "PANEL": "NB551068, NB552085",
+            "CUSTOM_PANELS": "NB551068, NB552085",
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -519,7 +511,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": "A01229",
-            "PANEL": False,
+            "CUSTOM_PANELS": False,
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -553,7 +545,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": False,
-            "PANEL": False,
+            "CUSTOM_PANELS": False,
             "SWIFT":  "M02631, M02353",
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -587,7 +579,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": False,
-            "PANEL": False,
+            "CUSTOM_PANELS": False,
             "SWIFT":  "M02631, M02353",
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -620,7 +612,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
-            "PANEL": "NB551068, NB552085",
+            "CUSTOM_PANELS": "NB551068, NB552085",
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,
@@ -652,7 +644,7 @@ tool_settings = {
         "lower_lim_label": False,
         "report_type": {
             "WES": "NB551068, NB552085, A01229",
-            "PANEL": False,
+            "CUSTOM_PANELS": False,
             "SWIFT": False,
             "NEXTSEQ_LUIGI": False,
             "NEXTSEQ_MARIO": False,

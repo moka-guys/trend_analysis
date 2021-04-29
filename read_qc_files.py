@@ -604,15 +604,15 @@ class Emails(object):
 
         if self.runtype == "WES":
             recipients = [self.wes_email, self.mokaguys_email]
-        if self.runtype == "PANEL":
+        if self.runtype == "CUSTOM_PANELS":
             recipients = [self.custom_panels_email, self.mokaguys_email]
         if self.runtype == "SWIFT":
             recipients = [self.oncology_ops_email, self.mokaguys_email]
 
-        if self.runtype in ["WES", "PANEL", "SWIFT"]:
+        if self.runtype in ["WES", "CUSTOM_PANELS", "SWIFT"]:
             m = Message()
             m["X-Priority"] = str("3")
-            m["Subject"] = self.email_subject.format(place_holder_values["run_list"])
+            m["Subject"] = self.email_subject.format(self.runtype)
             m['To'] = ", ".join(recipients)
             m['From'] = config.general_config["general"]["sender"]
             m.set_payload(message_body)
@@ -645,37 +645,37 @@ def sorted_runs(run_list, runtype):
         :return             (list) x (defined in config) most recent runfolder names, ordered oldest to newest
 
     Take list of runfolders (e.g. 002_YYMMDD_[*WES*,*NGS*,*ONC*]), filter runs of correct runtype by substrings in run
-    names, add to dictionary with date as key and name as value, sort in date order by key, return x most recent runs.
+    names, add to dictionary with name as value and date as key (cannot add date as key as dictionaries do not allow
+    duplicate keys), sort in date order by value, return x most recent runs.
     """
     dates = {}
     for run in run_list:
         if runtype == "WES" and "WES" in run:
-            dates[(int(run.split("_")[1]))] = run
-        if runtype == "PANEL" and "NGS" in run and "WES" not in run:
-            dates[(int(run.split("_")[1]))] = run
+            dates[run] = int(run.split("_")[1])
+        if runtype == "CUSTOM_PANELS" and "NGS" in run and "WES" not in run:
+            dates[run] = int(run.split("_")[1])
         if runtype == "SWIFT" and "ONC" in run:
-            dates[(int(run.split("_")[1]))] = run
+            dates[run] = int(run.split("_")[1])
         if runtype == "NEXTSEQ_LUIGI" and "NB552085" in run:
-            dates[(int(run.split("_")[1]))] = run
+            dates[run] = int(run.split("_")[1])
         if runtype == "NEXTSEQ_MARIO" and "NB551068" in run:
-            dates[(int(run.split("_")[1]))] = run
+            dates[run] = int(run.split("_")[1])
         if runtype == "MISEQ_ONC" and "M02353" in run:
-            dates[(int(run.split("_")[1]))] = run
+            dates[run] = int(run.split("_")[1])
         if runtype == "MISEQ_DNA" and "M02631" in run:
-            dates[(int(run.split("_")[1]))] = run
+            dates[run] = int(run.split("_")[1])
         if runtype == "NOVASEQ_PIKACHU" and "A01229" in run:
-            dates[(int(run.split("_")[1]))] = run
+            dates[run] = int(run.split("_")[1])
         if runtype == "TSO500" and "TSO500" in run:
-            dates[(int(run.split("_")[1]))] = run
+            dates[run] = int(run.split("_")[1])
         if runtype == "SNP" and "SNP" in run:
-            dates[(int(run.split("_")[1]))] = run
+            dates[run] = int(run.split("_")[1])
         if runtype == "ADX" and "ADX" in run:
-            dates[(int(run.split("_")[1]))] = run
+            dates[run] = int(run.split("_")[1])
 
     sortedruns = []
-    # if there are 2 runs on same day, both runs will be added for each date so use set()
-    for date in sorted(set(dates)):
-        sortedruns.append(dates[date])
+    for date in sorted(dates, key=dates.get):
+        sortedruns.append(date)
     return sortedruns[-config.general_config["general"]["number_of_runs_to_include"]:]
 
 
