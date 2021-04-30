@@ -53,8 +53,8 @@ The index.html file contains links to the individual MultiQC reports, per run ty
 ### Steps
 #### Checking if new trend analysis is required
 * The index.html file is updated whenever a new multiqc report is uploaded
-* The date modified timestamp is assessed to see if it's within the last x hours (where x is the frequency the script is run - config.run_frequency)
-* Script is run if timestamp is more recent than the frequency the script is run 
+* Checks the date modified timestamp (when the index was last modified). date modified timestamp is assessed to see if it's within the last x hours (where x is the frequency the script is run - config.run_frequency)
+* If it was last modified more recently than the last time the script was run (meaning a new multiqc report has been added), then the script is run
 
 #### Create run type specific trend analysis plot
 * For each run type (defined in config.run_types)

@@ -89,10 +89,10 @@ def get_github_file(github_repo, github_file):
     Creates a temporary dir, clones into that dir, copies the desired file from that dir, and removes the temporary
     dir.
     """
-    t = tempfile.mkdtemp()
-    git.Repo.clone_from(github_repo, t, branch='Production', depth=1)
-    shutil.move(os.path.join(t, github_file), os.path.join(os.getcwd(), github_file))
-    shutil.rmtree(t)
+    tempdirpath = tempfile.mkdtemp()
+    git.Repo.clone_from(github_repo, tempdirpath, branch='Production', depth=1)
+    shutil.move(os.path.join(tempdirpath, github_file), os.path.join(os.getcwd(), github_file))
+    shutil.rmtree(tempdirpath)
 
 
 class TrendReport(object):
@@ -238,13 +238,13 @@ class TrendReport(object):
             :return xlabels:    (list) list of x labels from oldest to newest
         """
         xlabels = []
-        for i in range(1, len(self.dictionary[tool].keys()) + 1):
-            if i == 1:
-                xlabels.append(str(i) + "\noldest")
-            elif i == len(self.dictionary[tool].keys()):
-                xlabels.append(str(i) + "\nnewest")
+        for value in range(1, len(self.dictionary[tool].keys()) + 1):
+            if value == 1:
+                xlabels.append(str(value) + "\noldest")
+            elif value == len(self.dictionary[tool].keys()):
+                xlabels.append(str(value) + "\nnewest")
             else:
-                xlabels.append(str(i))
+                xlabels.append(str(value))
         return xlabels
 
     def return_image_paths(self, tool):
@@ -272,8 +272,8 @@ class TrendReport(object):
         """
         rows_html = ""
         table_row_html = "<tr><td >{}</td><td>{}</td></tr>"
-        for i in sorted(self.dictionary[tool]):
-            rows_html += table_row_html.format(i, self.dictionary[tool][i])
+        for run in sorted(self.dictionary[tool]):
+            rows_html += table_row_html.format(run, self.dictionary[tool][run])
         # close table body tag
         rows_html += "</tbody>"
         return rows_html
@@ -360,13 +360,13 @@ class TrendReport(object):
         """
         sorted_run_list = sorted_runs(os.listdir(self.input_folder), self.runtype)
         run_name_dictionary = {}
-        for i in range(1, len(sorted_run_list) + 1):
-            if i == 1:
-                run_name_dictionary[str(i) + " oldest"] = sorted_run_list[i - 1]
-            elif i == len(sorted_run_list):
-                run_name_dictionary[str(i) + " newest"] = sorted_run_list[i - 1]
+        for value in range(1, len(sorted_run_list) + 1):
+            if value == 1:
+                run_name_dictionary[str(value) + " oldest"] = sorted_run_list[value - 1]
+            elif value == len(sorted_run_list):
+                run_name_dictionary[str(value) + " newest"] = sorted_run_list[value - 1]
             else:
-                run_name_dictionary[str(i)] = sorted_run_list[i - 1]
+                run_name_dictionary[str(value)] = sorted_run_list[value - 1]
         return run_name_dictionary
 
     def parse_multiqc_output(self, tool):
@@ -739,19 +739,19 @@ def main():
     # 2. Create instance of Emails class, then call call_tools (member function of Emails instance) to send emails
     if args.dev or check_for_update():
         for runtype in inputs["run_types"]:
-            t = TrendReport(input_folder=inputs["input_folder"], output_folder=inputs["output_folder"],
-                            images_folder=inputs["images_folder"], runtype=runtype, panel_dict=panel_dict,
-                            template_dir=inputs["template_dir"], archive_folder=inputs["archive_folder"],
-                            logopath=inputs["logopath"], plot_order=inputs["plot_order"],
-                            wkhtmltopdf_path=inputs["wkhtmltopdf_path"])
-            methods = inspect.getmembers(t, predicate=inspect.ismethod)
-            t.call_tools(methods)
-            e = Emails(input_folder=inputs["input_folder"], runtype=runtype, wes_email=inputs["wes_email"],
-                       oncology_ops_email=inputs["oncology_ops_email"],
-                       custom_panels_email=inputs["custom_panels_email"], mokaguys_email=inputs["mokaguys_email"],
-                       email_subject=inputs["email_subject"], email_message=inputs["email_message"],
-                       hyperlink=inputs["reports_hyperlink"])
-            e.call_tools()
+            trend_report = TrendReport(input_folder=inputs["input_folder"], output_folder=inputs["output_folder"],
+                                       images_folder=inputs["images_folder"], runtype=runtype, panel_dict=panel_dict,
+                                       template_dir=inputs["template_dir"], archive_folder=inputs["archive_folder"],
+                                       logopath=inputs["logopath"], plot_order=inputs["plot_order"],
+                                       wkhtmltopdf_path=inputs["wkhtmltopdf_path"])
+            methods = inspect.getmembers(trend_report, predicate=inspect.ismethod)
+            trend_report.call_tools(methods)
+            email = Emails(input_folder=inputs["input_folder"], runtype=runtype, wes_email=inputs["wes_email"],
+                           oncology_ops_email=inputs["oncology_ops_email"],
+                           custom_panels_email=inputs["custom_panels_email"], mokaguys_email=inputs["mokaguys_email"],
+                           email_subject=inputs["email_subject"], email_message=inputs["email_message"],
+                           hyperlink=inputs["reports_hyperlink"])
+            email.call_tools()
 
 
 if __name__ == '__main__':
