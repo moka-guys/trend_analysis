@@ -711,7 +711,7 @@ def git_tag():
     return out.rstrip()
 
 
-def check_for_update():
+def check_for_update(index_file, run_frequency):
     """
     Determine whether index.html (contains links to multiqc report) has been modified in the last hour.
         :return: (bool) returns a Boolean value true or false
@@ -720,8 +720,8 @@ def check_for_update():
     (now - timedelta), multiqc report has been added and function returns True, else returns False.
     """
     # see when the index.html file was last modified
-    index_last_modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(config.index_file))
-    if index_last_modified >= datetime.datetime.now() - datetime.timedelta(hours=config.run_frequency):
+    index_last_modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(index_file))
+    if index_last_modified >= datetime.datetime.now() - datetime.timedelta(hours=run_frequency):
         return True
     else:
         return False
@@ -733,11 +733,11 @@ def main():
     panel_dict = get_panel_dict(github_repo="https://github.com/moka-guys/automate_demultiplex",
                                 github_file="automate_demultiplex_config.py",
                                 kit_list=["vcp1_panel_list", "vcp2_panel_list", "vcp3_panel_list"])
-    # If (run in dev mode), or (run in prod mode AND new run uploaded since script last run):
+    # If (run in dev mode), or (run in prod mode AND index file has been updates since last run (denoting new run uploaded)):
     # 1. Create instance of TrendReport class, retrieve methods of TrendReport class, then call call_tools (member
     # function of TrendReport instance) to generate the trend report
     # 2. Create instance of Emails class, then call call_tools (member function of Emails instance) to send emails
-    if args.dev or check_for_update():
+    if args.dev or check_for_update(inputs["index_file"],inputs["run_frequency"]):
         for runtype in inputs["run_types"]:
             trend_report = TrendReport(input_folder=inputs["input_folder"], output_folder=inputs["output_folder"],
                                        images_folder=inputs["images_folder"], runtype=runtype, panel_dict=panel_dict,
