@@ -23,6 +23,7 @@ import importlib
 import tempfile
 import numpy as np
 import glob
+import requests
 
 def arg_parse():
     """
@@ -89,8 +90,10 @@ def get_github_file(github_repo, github_file):
     Creates a temporary dir, clones into that dir, copies the desired file from that dir, and removes the temporary
     dir.
     """
+    response = requests.get("https://api.github.com/repos/moka-guys/automate_demultiplex/releases/latest")
+    latest_tag_name = response.json()["tag_name"]
     tempdirpath = tempfile.mkdtemp()
-    git.Repo.clone_from(github_repo, tempdirpath, branch='Production', depth=1)
+    git.Repo.clone_from(github_repo, tempdirpath, branch=latest_tag_name, depth=1)
     shutil.move(os.path.join(tempdirpath, github_file), os.path.join(os.getcwd(), github_file))
     shutil.rmtree(tempdirpath)
 
